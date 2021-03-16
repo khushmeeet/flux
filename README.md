@@ -1,0 +1,2 @@
+# flux
+Static Site Generator  
