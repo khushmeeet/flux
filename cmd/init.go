@@ -1,9 +1,9 @@
 package cmd
 
 import (
-	"fmt"
-
+	"github.com/khushmeeet/flux/fluxgen"
 	"github.com/spf13/cobra"
+	"log"
 )
 
 // initCmd represents the init command
@@ -14,7 +14,10 @@ var initCmd = &cobra.Command{
 Just cd into the location, where you want to create the project. 
 init command will generate the root folder and sub-folders inside it.`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("init called")
+		if len(args) != 1 {
+			log.Fatal("Only one arg must be supplied to init command")
+		}
+		fluxgen.InitProject(args[0])
 	},
 }
 
