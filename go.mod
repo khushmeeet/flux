@@ -7,5 +7,6 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/viper v1.7.1
 	github.com/yuin/goldmark v1.3.3 // indirect
+	github.com/yuin/goldmark-highlighting v0.0.0-20200307114337-60d527fdb691 // indirect
 	github.com/yuin/goldmark-meta v1.0.0 // indirect
 )

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"github.com/khushmeeet/flux/fluxgen"
 
 	"github.com/spf13/cobra"
 )
@@ -14,6 +15,7 @@ var buildCmd = &cobra.Command{
 ready to be deployed in a web service`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fmt.Println("build called")
+		fluxgen.Generate()
 	},
 }
 
