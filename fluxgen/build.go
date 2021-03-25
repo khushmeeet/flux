@@ -8,6 +8,7 @@ import (
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
+	"html/template"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -27,26 +28,6 @@ type Page struct {
 	Images   []string
 }
 
-func markdownToHtml(src []byte) ([]byte, error) {
-	var buff bytes.Buffer
-
-	md := goldmark.New(
-		goldmark.WithExtensions(meta.Meta,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("dracula"))),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-		),
-	)
-
-	context := parser.NewContext()
-	if err := md.Convert(src, &buff, parser.WithContext(context)); err != nil {
-		return []byte{}, err
-	}
-
-	return buff.Bytes(), nil
-}
-
 func Generate() {
 	currentDir, err := os.Getwd()
 	if err != nil {
@@ -62,16 +43,53 @@ func Generate() {
 			if err != nil {
 				log.Fatal("Unable to read Markdown file!")
 			}
-			Html, err := markdownToHtml(markdownFile)
+			convertedHtml, metaData, err := markdownToHtml(markdownFile)
 			if err != nil {
 				log.Fatal("Unable to convert Markdown to HTML!")
 			}
-			fmt.Println(string(Html))
-
+			parseTemplate(convertedHtml, metaData)
 		}
 		return err
 	})
 	if err != nil {
 		log.Fatal(err)
+	}
+}
+
+func markdownToHtml(src []byte) ([]byte, map[string]interface{}, error) {
+	var buff bytes.Buffer
+
+	md := goldmark.New(
+		goldmark.WithExtensions(meta.Meta,
+			highlighting.NewHighlighting(
+				highlighting.WithStyle("dracula"))),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+		),
+	)
+
+	context := parser.NewContext()
+	if err := md.Convert(src, &buff, parser.WithContext(context)); err != nil {
+		return []byte{}, nil, err
+	}
+	metaData := meta.Get(context)
+	return buff.Bytes(), metaData, nil
+}
+
+func parseTemplate(convertedHtml []byte, metaData map[string]interface{}) {
+	pageData := make(map[string]interface{})
+	pageData["content"] = template.HTML(string(convertedHtml))
+	fmt.Println(string(convertedHtml))
+	for k, v := range metaData {
+		pageData[k] = v
+	}
+	t, err := template.ParseFiles(path.Join(TemplatesFolder, pageData["template"].(string)))
+	if err != nil {
+		log.Fatal("Unable to read HTML Template!")
+	}
+	file, err := os.Create(path.Join(SiteFolder, pageData["template"].(string)))
+	err = t.Execute(file, pageData)
+	if err != nil {
+		log.Fatal("Could not parse HTML Template!")
 	}
 }
