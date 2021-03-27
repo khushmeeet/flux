@@ -1,11 +1,20 @@
 package fluxgen
 
 import (
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
 	"log"
 	"os"
 	"path"
 )
+
+type fluxConfig struct {
+	SiteTitle       string `json:"site_title"`
+	Email           string `json:"email"`
+	TwitterUsername string `json:"twitter_username"`
+	GithubUsername  string `json:"github_username"`
+}
 
 func InitProject(projectName string) {
 	currentDir, err := os.Getwd()
@@ -19,6 +28,18 @@ func InitProject(projectName string) {
 		if mkdirErr, ok := err.(*os.PathError); ok {
 			log.Fatal("Unable to create folder at path: " + mkdirErr.Path)
 		}
+	}
+
+	fmt.Println("Creating project config file")
+	fcJson, err := json.Marshal(fluxConfig{
+		SiteTitle:       projectName,
+		Email:           "hello@flux.com",
+		TwitterUsername: "@" + projectName,
+		GithubUsername:  projectName,
+	})
+	err = ioutil.WriteFile(path.Join(currentDir, projectName, ConfigFile), fcJson, 0644)
+	if err != nil {
+		log.Fatal("Unable to write data to Config File")
 	}
 
 	for _, folderName := range []string{TemplatesFolder, StaticFolder, PagesFolder, SiteFolder} {

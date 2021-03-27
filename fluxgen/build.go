@@ -15,18 +15,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
-	"time"
 )
-
-type Page struct {
-	Title    string
-	Short    string
-	Template string
-	Date     time.Time
-	Html     []byte
-	Tags     []string
-	Images   []string
-}
 
 func Generate() {
 	currentDir, err := os.Getwd()
@@ -47,7 +36,7 @@ func Generate() {
 			if err != nil {
 				log.Fatal("Unable to convert Markdown to HTML!")
 			}
-			parseTemplate(convertedHtml, metaData)
+			parseHTMLTemplate(convertedHtml, metaData)
 		}
 		return err
 	})
@@ -76,9 +65,9 @@ func markdownToHtml(src []byte) ([]byte, map[string]interface{}, error) {
 	return buff.Bytes(), metaData, nil
 }
 
-func parseTemplate(convertedHtml []byte, metaData map[string]interface{}) {
+func parseHTMLTemplate(convertedHtml []byte, metaData map[string]interface{}) {
 	pageData := make(map[string]interface{})
-	pageData["content"] = template.HTML(string(convertedHtml))
+	pageData["content"] = template.HTML(convertedHtml)
 	fmt.Println(string(convertedHtml))
 	for k, v := range metaData {
 		pageData[k] = v

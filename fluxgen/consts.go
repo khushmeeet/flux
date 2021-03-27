@@ -1,6 +1,7 @@
 package fluxgen
 
-var TemplatesFolder = "templates"
-var StaticFolder = "static"
-var PagesFolder = "pages"
-var SiteFolder = "_sites"
+const TemplatesFolder = "templates"
+const StaticFolder = "static"
+const PagesFolder = "pages"
+const SiteFolder = "_sites"
+const ConfigFile = "config.yaml"
