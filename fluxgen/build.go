@@ -24,9 +24,6 @@ func Generate() {
 	}
 
 	err = filepath.Walk(path.Join(currentDir, PagesFolder), func(path string, info fs.FileInfo, err error) error {
-		if err != nil {
-			log.Fatal(err)
-		}
 		if filepath.Ext(path) == ".md" {
 			markdownFile, err := ioutil.ReadFile(path)
 			if err != nil {
@@ -41,7 +38,7 @@ func Generate() {
 		return err
 	})
 	if err != nil {
-		log.Fatal(err)
+		log.Fatal("Not able to scan Pages folder!")
 	}
 }
 
@@ -72,13 +69,30 @@ func parseHTMLTemplate(convertedHtml []byte, metaData map[string]interface{}) {
 	for k, v := range metaData {
 		pageData[k] = v
 	}
-	t, err := template.ParseFiles(path.Join(TemplatesFolder, pageData["template"].(string)))
-	if err != nil {
-		log.Fatal("Unable to read HTML Template!")
-	}
+
+	tmpl := parsePartials()
 	file, err := os.Create(path.Join(SiteFolder, pageData["template"].(string)))
-	err = t.Execute(file, pageData)
+	err = tmpl.Execute(file, pageData)
 	if err != nil {
-		log.Fatal("Could not parse HTML Template!")
+		log.Fatal("Could not parse HTML Template!", err)
 	}
+}
+
+func parsePartials() *template.Template {
+	tmpl := template.New("index.html")
+	var t *template.Template
+	err := filepath.Walk(TemplatesFolder, func(path string, info fs.FileInfo, err error) error {
+		if filepath.Ext(path) == ".html" {
+			t, err = tmpl.ParseFiles(path)
+			if err != nil {
+				return err
+			}
+			return nil
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("Not able to scan Templates folder!")
+	}
+	return template.Must(t, err)
 }
