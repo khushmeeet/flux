@@ -2,7 +2,6 @@ package fluxgen
 
 import (
 	"bytes"
-	"fmt"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	meta "github.com/yuin/goldmark-meta"
@@ -15,25 +14,29 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"strings"
 )
 
-func Generate() {
-	currentDir, err := os.Getwd()
-	if err != nil {
-		log.Fatal("Unable to retrieve current working directory")
-	}
+type Page struct {
+	Href     string
+	Name     string
+	Content  template.HTML
+	MetaData map[string]interface{}
+}
 
-	err = filepath.Walk(path.Join(currentDir, PagesFolder), func(path string, info fs.FileInfo, err error) error {
+func Generate() {
+	tmplMap := parseTemplatesWithPartials()
+	err := filepath.Walk(PagesFolder, func(path string, info fs.FileInfo, err error) error {
 		if filepath.Ext(path) == ".md" {
 			markdownFile, err := ioutil.ReadFile(path)
 			if err != nil {
 				log.Fatal("Unable to read Markdown file!")
 			}
-			convertedHtml, metaData, err := markdownToHtml(markdownFile)
+			page, err := parsePages(path, markdownFile)
 			if err != nil {
 				log.Fatal("Unable to convert Markdown to HTML!")
 			}
-			parseHTMLTemplate(convertedHtml, metaData)
+			executeTemplates(tmplMap, page)
 		}
 		return err
 	})
@@ -42,7 +45,7 @@ func Generate() {
 	}
 }
 
-func markdownToHtml(src []byte) ([]byte, map[string]interface{}, error) {
+func parsePages(path string, src []byte) (Page, error) {
 	var buff bytes.Buffer
 
 	md := goldmark.New(
@@ -56,43 +59,52 @@ func markdownToHtml(src []byte) ([]byte, map[string]interface{}, error) {
 
 	context := parser.NewContext()
 	if err := md.Convert(src, &buff, parser.WithContext(context)); err != nil {
-		return []byte{}, nil, err
+		return Page{}, err
 	}
 	metaData := meta.Get(context)
-	return buff.Bytes(), metaData, nil
+	pageData := Page{
+		Href:     "/" + filepath.Base(path),
+		Name:     filepath.Base(path),
+		Content:  template.HTML(buff.Bytes()),
+		MetaData: metaData,
+	}
+	return pageData, nil
 }
 
-func parseHTMLTemplate(convertedHtml []byte, metaData map[string]interface{}) {
-	pageData := make(map[string]interface{})
-	pageData["content"] = template.HTML(convertedHtml)
-	fmt.Println(string(convertedHtml))
-	for k, v := range metaData {
-		pageData[k] = v
-	}
-
-	tmpl := parsePartials()
-	file, err := os.Create(path.Join(SiteFolder, pageData["template"].(string)))
-	err = tmpl.Execute(file, pageData)
+func executeTemplates(tmplMap map[string]*template.Template, page Page) {
+	fileName := strings.Split(page.Name, ".")[0]
+	formattedFileName := strings.Join(strings.Split(fileName, " "), "-")
+	file, err := os.Create(path.Join(SiteFolder, formattedFileName+".html"))
+	err = tmplMap[page.MetaData["template"].(string)].Execute(file, page)
 	if err != nil {
-		log.Fatal("Could not parse HTML Template!", err)
+		log.Fatal("Unable to execute templates!", err)
 	}
 }
 
-func parsePartials() *template.Template {
-	tmpl := template.New("index.html")
-	var t *template.Template
-	err := filepath.Walk(TemplatesFolder, func(path string, info fs.FileInfo, err error) error {
-		if filepath.Ext(path) == ".html" {
-			t, err = tmpl.ParseFiles(path)
+func parseTemplatesWithPartials() map[string]*template.Template {
+	parsedTmplMap := make(map[string]*template.Template)
+	templatesInfo, err := ioutil.ReadDir(TemplatesFolder)
+	if err != nil {
+		log.Fatal("Error reading Templates Folder!")
+	}
+	for _, i := range templatesInfo {
+		if !i.IsDir() {
+			tmpl := template.New(i.Name())
+			var t *template.Template
+			err = filepath.Walk(TemplatesFolder, func(path string, info fs.FileInfo, err error) error {
+				if filepath.Ext(path) == ".html" {
+					t, err = tmpl.ParseFiles(path)
+					if err != nil {
+						return err
+					}
+				}
+				return nil
+			})
 			if err != nil {
-				return err
+				log.Fatal("Not able to walk Templates folder!")
 			}
-			return nil
+			parsedTmplMap[i.Name()] = t
 		}
-		return nil
-	})
-	if err != nil {
-		log.Fatal("Not able to scan Templates folder!")
 	}
-	return template.Must(t, err)
+	return parsedTmplMap
 }
