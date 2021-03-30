@@ -24,30 +24,23 @@ type Page struct {
 	MetaData map[string]interface{}
 }
 
-func Generate() {
+func FluxBuild() {
 	tmplMap := parseTemplatesWithPartials()
-	err := filepath.Walk(PagesFolder, func(path string, info fs.FileInfo, err error) error {
-		if filepath.Ext(path) == ".md" {
-			markdownFile, err := ioutil.ReadFile(path)
-			if err != nil {
-				log.Fatal("Unable to read Markdown file!")
-			}
-			page, err := parsePages(path, markdownFile)
-			if err != nil {
-				log.Fatal("Unable to convert Markdown to HTML!")
-			}
-			executeTemplates(tmplMap, page)
-		}
-		return err
-	})
+
+	pageSlice, err := parsePages()
 	if err != nil {
-		log.Fatal("Not able to scan Pages folder!")
+		log.Fatal("Unable to parse Markdown files!")
+	}
+
+	for _, i := range pageSlice {
+		executeTemplates(tmplMap, i)
 	}
 }
 
-func parsePages(path string, src []byte) (Page, error) {
+func parsePages() ([]Page, error) {
 	var buff bytes.Buffer
-
+	var pageSlice []Page
+	context := parser.NewContext()
 	md := goldmark.New(
 		goldmark.WithExtensions(meta.Meta,
 			highlighting.NewHighlighting(
@@ -57,18 +50,32 @@ func parsePages(path string, src []byte) (Page, error) {
 		),
 	)
 
-	context := parser.NewContext()
-	if err := md.Convert(src, &buff, parser.WithContext(context)); err != nil {
-		return Page{}, err
+	err := filepath.Walk(PagesFolder, func(path string, info fs.FileInfo, err error) error {
+		if filepath.Ext(path) == ".md" {
+			markdownFile, err := ioutil.ReadFile(path)
+			if err != nil {
+				return err
+			}
+			if err := md.Convert(markdownFile, &buff, parser.WithContext(context)); err != nil {
+				return err
+			}
+			metaData := meta.Get(context)
+			pageData := Page{
+				Href:     "/" + filepath.Base(path),
+				Name:     filepath.Base(path),
+				Content:  template.HTML(buff.Bytes()),
+				MetaData: metaData,
+			}
+			pageSlice = append(pageSlice, pageData)
+
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatal("Not able to scan Pages folder!")
 	}
-	metaData := meta.Get(context)
-	pageData := Page{
-		Href:     "/" + filepath.Base(path),
-		Name:     filepath.Base(path),
-		Content:  template.HTML(buff.Bytes()),
-		MetaData: metaData,
-	}
-	return pageData, nil
+
+	return pageSlice, nil
 }
 
 func executeTemplates(tmplMap map[string]*template.Template, page Page) {
