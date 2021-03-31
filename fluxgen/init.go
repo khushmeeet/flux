@@ -16,7 +16,7 @@ type fluxConfig struct {
 	GithubUsername  string `json:"github_username"`
 }
 
-func InitProject(projectName string) {
+func FluxInit(projectName string) {
 	currentDir, err := os.Getwd()
 
 	if err != nil {

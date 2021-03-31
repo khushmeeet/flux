@@ -17,7 +17,7 @@ init command will generate the root folder and sub-folders inside it.`,
 		if len(args) != 1 {
 			log.Fatal("Only one arg must be supplied to init command")
 		}
-		fluxgen.InitProject(args[0])
+		fluxgen.FluxInit(args[0])
 	},
 }
 

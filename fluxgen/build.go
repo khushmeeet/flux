@@ -2,11 +2,7 @@ package fluxgen
 
 import (
 	"bytes"
-	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting"
-	meta "github.com/yuin/goldmark-meta"
-	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
+	"encoding/json"
 	"html/template"
 	"io/fs"
 	"io/ioutil"
@@ -15,19 +11,29 @@ import (
 	"path"
 	"path/filepath"
 	"strings"
+
+	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting"
+	meta "github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
 )
 
 type Page struct {
-	Href     string
-	Name     string
-	Content  template.HTML
-	MetaData map[string]interface{}
+	Href       string
+	Name       string
+	Content    template.HTML
+	MetaData   map[string]interface{}
+	FluxConfig FluxConfig
 }
 
+type FluxConfig map[string]interface{}
+
 func FluxBuild() {
+	fc := readConfigFile()
 	tmplMap := parseTemplatesWithPartials()
 
-	pageSlice, err := parsePages()
+	pageSlice, err := parsePages(fc)
 	if err != nil {
 		log.Fatal("Unable to parse Markdown files!")
 	}
@@ -37,7 +43,7 @@ func FluxBuild() {
 	}
 }
 
-func parsePages() ([]Page, error) {
+func parsePages(fc FluxConfig) ([]Page, error) {
 	var buff bytes.Buffer
 	var pageSlice []Page
 	context := parser.NewContext()
@@ -52,6 +58,9 @@ func parsePages() ([]Page, error) {
 
 	err := filepath.Walk(PagesFolder, func(path string, info fs.FileInfo, err error) error {
 		if filepath.Ext(path) == ".md" {
+			fileName := strings.Split(filepath.Base(path), ".")[0]
+			formattedFileName := strings.Join(strings.Split(fileName, " "), "-")
+
 			markdownFile, err := ioutil.ReadFile(path)
 			if err != nil {
 				return err
@@ -61,10 +70,11 @@ func parsePages() ([]Page, error) {
 			}
 			metaData := meta.Get(context)
 			pageData := Page{
-				Href:     "/" + filepath.Base(path),
-				Name:     filepath.Base(path),
-				Content:  template.HTML(buff.Bytes()),
-				MetaData: metaData,
+				Href:       "/" + formattedFileName,
+				Name:       formattedFileName,
+				Content:    template.HTML(buff.Bytes()),
+				MetaData:   metaData,
+				FluxConfig: fc,
 			}
 			pageSlice = append(pageSlice, pageData)
 
@@ -79,9 +89,11 @@ func parsePages() ([]Page, error) {
 }
 
 func executeTemplates(tmplMap map[string]*template.Template, page Page) {
-	fileName := strings.Split(page.Name, ".")[0]
-	formattedFileName := strings.Join(strings.Split(fileName, " "), "-")
-	file, err := os.Create(path.Join(SiteFolder, formattedFileName+".html"))
+	file, err := os.Create(path.Join(SiteFolder, page.Name+".html"))
+	if err != nil {
+		log.Fatal("Unable to create HTML file!")
+	}
+
 	err = tmplMap[page.MetaData["template"].(string)].Execute(file, page)
 	if err != nil {
 		log.Fatal("Unable to execute templates!", err)
@@ -114,4 +126,19 @@ func parseTemplatesWithPartials() map[string]*template.Template {
 		}
 	}
 	return parsedTmplMap
+}
+
+func readConfigFile() FluxConfig {
+	var configMap FluxConfig
+	configFile, err := ioutil.ReadFile(ConfigFile)
+	if err != nil {
+		log.Fatal("Unable to read Config File!")
+	}
+
+	err = json.Unmarshal(configFile, &configMap)
+	if err != nil {
+		log.Fatal("Unable to parse Config File!")
+	}
+
+	return configMap
 }
