@@ -161,7 +161,7 @@ func parseStaticFiles() error {
 			}
 		}
 		if !info.IsDir() {
-			_, err = copy(path, filepath.Join(SiteFolder, path))
+			err = copy(path, filepath.Join(SiteFolder, path))
 			if err != nil {
 				return err
 			}
@@ -171,27 +171,27 @@ func parseStaticFiles() error {
 	return err
 }
 
-func copy(src, dst string) (int64, error) {
+func copy(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)
 	if err != nil {
-		return 0, err
+		return err
 	}
 
 	if !sourceFileStat.Mode().IsRegular() {
-		return 0, fmt.Errorf("%s is not a regular file", src)
+		return fmt.Errorf("%s is not a regular file", src)
 	}
 
 	source, err := os.Open(src)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer source.Close()
 
 	destination, err := os.Create(dst)
 	if err != nil {
-		return 0, err
+		return err
 	}
 	defer destination.Close()
-	nBytes, err := io.Copy(destination, source)
-	return nBytes, err
+	_, err = io.Copy(destination, source)
+	return err
 }
