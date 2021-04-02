@@ -29,12 +29,16 @@ type Page struct {
 	FluxConfig FluxConfig
 }
 
+type Pages struct {
+	Pages []Page
+}
+
 type FluxConfig map[string]interface{}
 
 func FluxBuild() {
 	err := parseStaticFiles()
 	if err != nil {
-		log.Fatal("Unable to parse static files!")
+		log.Fatal("Unable to parse static files!", err)
 	}
 
 	fc := readConfigFile()
@@ -47,6 +51,12 @@ func FluxBuild() {
 
 	for _, i := range pageSlice {
 		executeTemplates(tmplMap, i)
+	}
+
+	err = parseGeneralTemplates(pageSlice)
+	if err != nil {
+		errF := fmt.Errorf("error from parseGeneralTemplates() : %v", err)
+		log.Fatal(errF.Error())
 	}
 }
 
@@ -150,11 +160,43 @@ func readConfigFile() FluxConfig {
 	return configMap
 }
 
+func parseGeneralTemplates(pages []Page) error {
+	var partials []string
+	partialsFiles, err := ioutil.ReadDir(path.Join(TemplatesFolder, "partials"))
+	for _, f := range partialsFiles {
+		partials = append(partials, filepath.Join(TemplatesFolder, "partials", f.Name()))
+	}
+
+	dir, err := os.ReadDir(".")
+	if err != nil {
+		return err
+	}
+
+	for _, file := range dir {
+		if !file.IsDir() && filepath.Ext(file.Name()) == ".html" {
+			partials = append(partials, file.Name())
+			tmpl, err := template.New(file.Name()).ParseFiles(partials...)
+			if err != nil {
+				return err
+			}
+			f, err := os.Create(path.Join(SiteFolder, file.Name()))
+			if err != nil {
+				return err
+			}
+			err = tmpl.Execute(f, Pages{Pages: pages})
+			if err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func parseStaticFiles() error {
 	err := filepath.Walk(StaticFolder, func(path string, info fs.FileInfo, err error) error {
 		fmt.Println(filepath.Join(SiteFolder, path))
 		if info.IsDir() {
-			fmt.Println(filepath.Join(SiteFolder, path))
+			fmt.Println(filepath.Join(StaticFolder, path))
 			err := os.Mkdir(filepath.Join(SiteFolder, path), 0777)
 			if err != nil {
 				return err
