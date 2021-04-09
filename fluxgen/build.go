@@ -23,7 +23,7 @@ type Page struct {
 	Template   string
 	Href       string
 	Content    template.HTML
-	MetaData   interface{}
+	MetaData   map[string]interface{}
 	AllPages   *Pages
 	FluxConfig *FluxConfig
 }
@@ -34,9 +34,11 @@ type FluxConfig map[string]interface{}
 
 func FluxBuild() {
 	fluxConfig := parseFluxConfig(ConfigFile)
-	pagesList := parsePages(PagesFolder, &fluxConfig)
-	fmt.Println(pagesList)
+	pageList := parsePages(PagesFolder, &fluxConfig)
 
+	By(descendingOrderByDate).Sort(pageList)
+
+	fmt.Println(pageList)
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -84,13 +86,13 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 		log.Fatalf("[Error Reading (%v)] - %v", path, err)
 	}
 
-	frontMatter := meta.Get(context)
 	err = md.Convert(file, &buff, parser.WithContext(context))
 	if err != nil {
 		log.Fatalf("[Error Parsing Markdown File (%v)] - %v", path, err)
 	}
+	frontMatter := meta.Get(context)
 
-	date, err := time.Parse("Oct 21, 2021", frontMatter["date"].(string))
+	date, err := time.Parse("2006-01-02", frontMatter["date"].(string))
 	if err != nil {
 		log.Fatalf("[Error Parsing Time (%v)] - %v", frontMatter["date"].(string), err)
 	}
@@ -101,8 +103,15 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 		Template:   frontMatter["template"].(string),
 		Href:       path,
 		Content:    template.HTML(buff.Bytes()),
-		MetaData:   frontMatter["metadata"],
+		MetaData:   make(map[string]interface{}),
 		FluxConfig: config,
 	}
+
+	for k, v := range frontMatter {
+		if k != "title" && k != "date" && k != "template" {
+			page.MetaData[k] = v
+		}
+	}
+
 	return page
 }
