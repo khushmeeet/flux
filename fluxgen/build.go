@@ -14,6 +14,7 @@ import (
 	"io/ioutil"
 	"log"
 	"path/filepath"
+	"strings"
 	"time"
 )
 
@@ -22,6 +23,7 @@ type Page struct {
 	Date       time.Time
 	Template   string
 	Href       string
+	Extension  string
 	Content    template.HTML
 	MetaData   map[string]interface{}
 	AllPages   *Pages
@@ -38,7 +40,7 @@ func FluxBuild() {
 
 	By(descendingOrderByDate).Sort(pageList)
 
-	fmt.Println(pageList)
+	parseHTMLTemplates(TemplatesFolder, pageList)
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -52,6 +54,38 @@ func parseFluxConfig(path string) FluxConfig {
 		log.Fatalf("[Error Unmarshalling (%v)] - %v", path, err)
 	}
 	return fluxConfig
+}
+
+func parseHTMLTemplates(path string, pages Pages) {
+	funcMap := template.FuncMap{}
+	tmpl, err := template.New("index").Funcs(funcMap).ParseGlob(path + "/*.html")
+	if err != nil {
+		log.Fatalf("[Error Parsing Template Dir (%v)] - %v", path, err)
+	}
+
+	for _, p := range pages {
+		p.AllPages = &pages
+		buffer, err := p.applyTemplate(tmpl)
+		if err != nil {
+			log.Fatalf("[Error Applying Template to Page] - %v", err)
+		}
+
+		err = ioutil.WriteFile(filepath.Join(SiteFolder, p.Href+p.Extension), buffer.Bytes(), 07444)
+		if err != nil {
+			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
+		}
+		fmt.Printf("Writing File: %v\n", p.Href)
+	}
+}
+
+func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
+	buffer := new(bytes.Buffer)
+	templateFile := p.Template + ".html"
+	err := t.ExecuteTemplate(buffer, templateFile, p)
+	if err != nil {
+		return nil, err
+	}
+	return buffer, nil
 }
 
 func parsePages(filePath string, config *FluxConfig) Pages {
@@ -101,7 +135,8 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 		Title:      frontMatter["title"].(string),
 		Date:       date,
 		Template:   frontMatter["template"].(string),
-		Href:       path,
+		Href:       strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
+		Extension:  ".html",
 		Content:    template.HTML(buff.Bytes()),
 		MetaData:   make(map[string]interface{}),
 		FluxConfig: config,
