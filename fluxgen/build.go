@@ -13,6 +13,7 @@ import (
 	"io/fs"
 	"io/ioutil"
 	"log"
+	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -26,7 +27,7 @@ type Page struct {
 	Extension  string
 	Content    template.HTML
 	MetaData   map[string]interface{}
-	AllPages   *Pages
+	PageList   *Pages
 	FluxConfig *FluxConfig
 }
 
@@ -37,10 +38,10 @@ type FluxConfig map[string]interface{}
 func FluxBuild() {
 	fluxConfig := parseFluxConfig(ConfigFile)
 	pageList := parsePages(PagesFolder, &fluxConfig)
-
 	By(descendingOrderByDate).Sort(pageList)
-
 	parseHTMLTemplates(TemplatesFolder, pageList)
+	processAssets(PagesFolder)
+	processStatic(StaticFolder)
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -64,7 +65,7 @@ func parseHTMLTemplates(path string, pages Pages) {
 	}
 
 	for _, p := range pages {
-		p.AllPages = &pages
+		p.PageList = &pages
 		buffer, err := p.applyTemplate(tmpl)
 		if err != nil {
 			log.Fatalf("[Error Applying Template to Page] - %v", err)
@@ -101,6 +102,44 @@ func parsePages(filePath string, config *FluxConfig) Pages {
 		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
 	}
 	return pageList
+}
+
+func processAssets(filePath string) {
+	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() && filepath.Ext(path) != ".md" {
+			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
+			fmt.Printf("Copying File: %v\n", path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+	}
+}
+
+func processStatic(filePath string) {
+	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Creating Folder: %v\n", path)
+		} else {
+			err := copyFile(path, filepath.Join(SiteFolder, path))
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Copying File: %v\n", path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+	}
 }
 
 func parseMarkdown(path string, config *FluxConfig) Page {
