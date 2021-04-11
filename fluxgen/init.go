@@ -30,7 +30,7 @@ func FluxInit(projectName string) {
 		}
 	}
 
-	fmt.Println("Creating project config file: config.yaml")
+	fmt.Println("Creating project config file: config.json")
 	fcJson, err := json.Marshal(fluxConfig{
 		SiteTitle:       projectName,
 		Email:           "hello@flux.com",
@@ -42,7 +42,7 @@ func FluxInit(projectName string) {
 		log.Fatal("Unable to write data to Config File")
 	}
 
-	for _, folderName := range []string{TemplatesFolder, PartialsFolder, StaticFolder, PagesFolder, SiteFolder} {
+	for _, folderName := range []string{TemplatesFolder, StaticFolder, PagesFolder, SiteFolder} {
 		fmt.Println("Creating sub-folder: " + folderName)
 		if err := os.Mkdir(path.Join(currentDir, projectName, folderName), 0777); err != nil {
 			if mkdirErr, ok := err.(*os.PathError); ok {

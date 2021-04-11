@@ -15,7 +15,7 @@ var cfgFile string
 var rootCmd = &cobra.Command{
 	Use:   "flux",
 	Short: "Simple Static Site Generator",
-	Long: `A opinionated Static Site Generator written in Go`,
+	Long:  `A opinionated Static Site Generator written in Go`,
 }
 
 func Execute() {
