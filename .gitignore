@@ -15,3 +15,6 @@
 # vendor/
 .idea/
 test/
+
+# Mac dump files
+.DS_Store
