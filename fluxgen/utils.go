@@ -30,3 +30,10 @@ func copyFile(src, dst string) error {
 	_, err = io.Copy(destination, source)
 	return err
 }
+
+func getMapValue(m map[string]interface{}, k string) string {
+	if val, ok := m[k]; ok {
+		return val.(string)
+	}
+	return ""
+}

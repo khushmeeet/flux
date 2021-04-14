@@ -41,7 +41,6 @@ func FluxBuild() {
 	pageList := parsePages(PagesFolder, &fluxConfig)
 	By(descendingOrderByDate).Sort(pageList)
 	parseHTMLTemplates(TemplatesFolder, pageList)
-	//parseMainHTMLFiles(pageList)
 	processAssets(PagesFolder)
 	processStatic(StaticFolder)
 }
@@ -57,6 +56,21 @@ func parseFluxConfig(path string) FluxConfig {
 		log.Fatalf("[Error Unmarshalling (%v)] - %v", path, err)
 	}
 	return fluxConfig
+}
+
+func parsePages(filePath string, config *FluxConfig) Pages {
+	var pageList Pages
+	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() && (filepath.Ext(path) == ".md" || filepath.Ext(path) == ".html") {
+			page := parseMarkdown(path, config)
+			pageList = append(pageList, page)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+	}
+	return pageList
 }
 
 func parseHTMLTemplates(path string, pages Pages) {
@@ -93,59 +107,6 @@ func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
 		return nil, err
 	}
 	return buffer, nil
-}
-
-func parsePages(filePath string, config *FluxConfig) Pages {
-	var pageList Pages
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && (filepath.Ext(path) == ".md" || filepath.Ext(path) == ".html") {
-			page := parseMarkdown(path, config)
-			pageList = append(pageList, page)
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
-	}
-	return pageList
-}
-
-func processAssets(filePath string) {
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
-			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
-			fmt.Printf("Copying File: %v\n", path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
-	}
-}
-
-func processStatic(filePath string) {
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Creating Folder: %v\n", path)
-		} else {
-			err := copyFile(path, filepath.Join(SiteFolder, path))
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Copying File: %v\n", path)
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
-	}
 }
 
 func parseMarkdown(path string, config *FluxConfig) Page {
@@ -207,9 +168,40 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 	return page
 }
 
-func getMapValue(m map[string]interface{}, k string) string {
-	if val, ok := m[k]; ok {
-		return val.(string)
+func processAssets(filePath string) {
+	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() && filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
+			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
+			fmt.Printf("Copying File: %v\n", path)
+			if err != nil {
+				return err
+			}
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
 	}
-	return ""
+}
+
+func processStatic(filePath string) {
+	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+		if info.IsDir() {
+			err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Creating Folder: %v\n", path)
+		} else {
+			err := copyFile(path, filepath.Join(SiteFolder, path))
+			if err != nil {
+				return err
+			}
+			fmt.Printf("Copying File: %v\n", path)
+		}
+		return nil
+	})
+	if err != nil {
+		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+	}
 }
