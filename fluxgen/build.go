@@ -38,6 +38,7 @@ type Pages []Page
 type FluxConfig map[string]interface{}
 
 func FluxBuild() {
+	FluxClean()
 	fluxConfig := parseFluxConfig(ConfigFile)
 	pageList, postList := parsePages(PagesFolder, &fluxConfig)
 	By(descendingOrderByDate).Sort(pageList)
