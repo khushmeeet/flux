@@ -29,6 +29,7 @@ type Page struct {
 	Content      template.HTML
 	MetaData     map[string]interface{}
 	PageList     *Pages
+	PostList     *Pages
 	FluxConfig   *FluxConfig
 }
 
@@ -38,9 +39,10 @@ type FluxConfig map[string]interface{}
 
 func FluxBuild() {
 	fluxConfig := parseFluxConfig(ConfigFile)
-	pageList := parsePages(PagesFolder, &fluxConfig)
+	pageList, postList := parsePages(PagesFolder, &fluxConfig)
 	By(descendingOrderByDate).Sort(pageList)
-	parseHTMLTemplates(TemplatesFolder, pageList)
+	By(descendingOrderByDate).Sort(postList)
+	parseHTMLTemplates(TemplatesFolder, pageList, postList)
 	processAssets(PagesFolder)
 	processStatic(StaticFolder)
 }
@@ -58,22 +60,26 @@ func parseFluxConfig(path string) FluxConfig {
 	return fluxConfig
 }
 
-func parsePages(filePath string, config *FluxConfig) Pages {
+func parsePages(filePath string, config *FluxConfig) (Pages, Pages) {
 	var pageList Pages
+	var postList Pages
 	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
 		if !info.IsDir() && (filepath.Ext(path) == ".md" || filepath.Ext(path) == ".html") {
 			page := parseMarkdown(path, config)
 			pageList = append(pageList, page)
+			if filepath.Ext(path) == ".md" {
+				postList = append(postList, page)
+			}
 		}
 		return nil
 	})
 	if err != nil {
 		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
 	}
-	return pageList
+	return pageList, postList
 }
 
-func parseHTMLTemplates(path string, pages Pages) {
+func parseHTMLTemplates(path string, pages Pages, posts Pages) {
 	pagesList, _ := filepath.Glob(PagesFolder + "/*.html")
 	templatesList, _ := filepath.Glob(TemplatesFolder + "/*.html")
 	allTemplatesList := append(pagesList, templatesList...)
@@ -86,6 +92,7 @@ func parseHTMLTemplates(path string, pages Pages) {
 
 	for _, p := range pages {
 		p.PageList = &pages
+		p.PostList = &posts
 		buffer, err := p.applyTemplate(tmpl)
 		if err != nil {
 			log.Fatalf("[Error Applying Template to Page] - %v", err)
