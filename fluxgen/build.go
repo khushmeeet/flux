@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/Masterminds/sprig"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	meta "github.com/yuin/goldmark-meta"
@@ -85,8 +86,7 @@ func parseHTMLTemplates(path string, pages Pages, posts Pages) {
 	templatesList, _ := filepath.Glob(TemplatesFolder + "/*.html")
 	allTemplatesList := append(pagesList, templatesList...)
 
-	funcMap := template.FuncMap{}
-	tmpl, err := template.New("index").Funcs(funcMap).ParseFiles(allTemplatesList...)
+	tmpl, err := template.New("index").Funcs(sprig.FuncMap()).ParseFiles(allTemplatesList...)
 	if err != nil {
 		log.Fatalf("[Error Parsing Template Dir (%v)] - %v", path, err)
 	}
