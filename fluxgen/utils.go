@@ -5,7 +5,18 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+	"strings"
 )
+
+func (p *Page) setHref(path string) {
+	if filepath.Base(path) == "index.html" {
+		p.Href = SiteFolder
+	} else if filepath.Ext(path) == ".html" {
+		p.Href = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	} else {
+		p.Href = strings.TrimSuffix(path, filepath.Base(path))
+	}
+}
 
 func copyFile(src, dst string) error {
 	sourceFileStat, err := os.Stat(src)

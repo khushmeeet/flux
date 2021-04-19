@@ -172,13 +172,7 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 		FluxConfig:   config,
 	}
 
-	if filepath.Base(path) == "index.html" {
-		page.Href = SiteFolder
-	} else if filepath.Ext(path) == ".html" {
-		page.Href = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	} else {
-		page.Href = strings.TrimSuffix(path, filepath.Base(path))
-	}
+	page.setHref(path)
 
 	for k, v := range frontMatter {
 		if k != "title" && k != "date" && k != "template" {
