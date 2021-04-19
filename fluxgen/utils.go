@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"os"
+	"path/filepath"
 )
 
 func copyFile(src, dst string) error {
@@ -36,4 +37,22 @@ func getMapValue(m map[string]interface{}, k string) string {
 		return val.(string)
 	}
 	return ""
+}
+
+func createFileWritePath(fileName string, filePath string) string {
+	fileWritePath := ""
+	if fileName == "index.html" {
+		fileWritePath = SiteFolder
+	} else {
+		fileWritePath = filepath.Join(SiteFolder, filePath)
+	}
+	return fileWritePath
+}
+
+func createFileWriteDir(filePath string) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		_ = os.MkdirAll(filePath, 0744)
+	} else {
+		fmt.Println("Directory already exists")
+	}
 }

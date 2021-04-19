@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"fmt"
 	"github.com/khushmeeet/flux/fluxgen"
 
 	"github.com/spf13/cobra"
@@ -14,7 +13,6 @@ var cleanCmd = &cobra.Command{
 	Long:  `Clean command will clean the output directory (_site)`,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxClean()
-		fmt.Println("clean called")
 	},
 }
 

@@ -27,6 +27,7 @@ type Page struct {
 	Href         string
 	OldExtension string
 	NewExtension string
+	FileName     string
 	Content      template.HTML
 	MetaData     map[string]interface{}
 	PageList     *Pages
@@ -99,7 +100,10 @@ func parseHTMLTemplates(path string, pages Pages, posts Pages) {
 			log.Fatalf("[Error Applying Template to Page] - %v", err)
 		}
 
-		err = ioutil.WriteFile(filepath.Join(SiteFolder, p.Href+p.NewExtension), buffer.Bytes(), 07444)
+		fileWritePath := createFileWritePath(p.FileName, p.Href)
+		createFileWriteDir(fileWritePath)
+
+		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), buffer.Bytes(), 0744)
 		if err != nil {
 			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
 		}
@@ -160,12 +164,20 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 		Title:        getMapValue(frontMatter, "title"),
 		Date:         parsedDate,
 		Template:     templateFile,
-		Href:         strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
 		OldExtension: filepath.Ext(path),
 		NewExtension: ".html",
+		FileName:     filepath.Base(path),
 		Content:      template.HTML(buff.Bytes()),
 		MetaData:     make(map[string]interface{}),
 		FluxConfig:   config,
+	}
+
+	if filepath.Base(path) == "index.html" {
+		page.Href = SiteFolder
+	} else if filepath.Ext(path) == ".html" {
+		page.Href = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	} else {
+		page.Href = strings.TrimSuffix(path, filepath.Base(path))
 	}
 
 	for k, v := range frontMatter {
