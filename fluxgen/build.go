@@ -46,8 +46,9 @@ func FluxBuild() {
 	By(descendingOrderByDate).Sort(pageList)
 	By(descendingOrderByDate).Sort(postList)
 	parseHTMLTemplates(TemplatesFolder, pageList, postList)
-	processAssets(PagesFolder)
-	processStatic(StaticFolder)
+	//processAssets(PagesFolder)
+	processStaticFolders(CSSFolder)
+	processStaticFolders(AssetsFolder)
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -182,40 +183,44 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 	return page
 }
 
-func processAssets(filePath string) {
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
-			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
-			fmt.Printf("Copying File: %v\n", path)
-			if err != nil {
-				return err
-			}
-		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
-	}
-}
+//func processAssets(filePath string) {
+//	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+//		if !info.IsDir() && filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
+//			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
+//			fmt.Printf("Copying File: %v\n", path)
+//			if err != nil {
+//				return err
+//			}
+//		}
+//		return nil
+//	})
+//	if err != nil {
+//		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+//	}
+//}
 
-func processStatic(filePath string) {
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
-			err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
-			if err != nil {
-				return err
+func processStaticFolders(filePath string) {
+	if _, err := os.Stat(filePath); err == nil {
+		err = filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
+			if info.IsDir() {
+				err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Creating Folder: %v\n", path)
+			} else {
+				err := copyFile(path, filepath.Join(SiteFolder, path))
+				if err != nil {
+					return err
+				}
+				fmt.Printf("Copying File: %v\n", path)
 			}
-			fmt.Printf("Creating Folder: %v\n", path)
-		} else {
-			err := copyFile(path, filepath.Join(SiteFolder, path))
-			if err != nil {
-				return err
-			}
-			fmt.Printf("Copying File: %v\n", path)
+			return nil
+		})
+		if err != nil {
+			log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
 		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+	} else {
+		fmt.Printf("\"%v\" does not exists... Skipping", filePath)
 	}
 }
