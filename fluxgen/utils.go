@@ -1,11 +1,21 @@
 package fluxgen
 
 import (
+	"bytes"
 	"fmt"
+	"github.com/yuin/goldmark"
+	highlighting "github.com/yuin/goldmark-highlighting"
+	meta "github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/parser"
+	"github.com/yuin/goldmark/renderer/html"
+	"html/template"
 	"io"
+	"io/ioutil"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 )
 
 func (p *Page) setHref(path string) {
@@ -16,6 +26,16 @@ func (p *Page) setHref(path string) {
 	} else {
 		p.Href = strings.TrimSuffix(path, filepath.Base(path))
 	}
+}
+
+func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
+	buffer := new(bytes.Buffer)
+	templateFile := p.Template + ".html"
+	err := t.ExecuteTemplate(buffer, templateFile, p)
+	if err != nil {
+		return nil, err
+	}
+	return buffer, nil
 }
 
 func copyFile(src, dst string) error {
@@ -66,4 +86,65 @@ func createFileWriteDir(filePath string) {
 	} else {
 		fmt.Println("Directory already exists")
 	}
+}
+
+func parseMarkdown(path string, config *FluxConfig) Page {
+	var buff bytes.Buffer
+	context := parser.NewContext()
+	md := goldmark.New(
+		goldmark.WithExtensions(meta.Meta,
+			highlighting.NewHighlighting(
+				highlighting.WithStyle("dracula"))),
+		goldmark.WithRendererOptions(
+			html.WithHardWraps(),
+		),
+	)
+
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatalf("[Error Reading (%v)] - %v", path, err)
+	}
+
+	err = md.Convert(file, &buff, parser.WithContext(context))
+	if err != nil {
+		log.Fatalf("[Error Parsing Markdown File (%v)] - %v", path, err)
+	}
+	frontMatter := meta.Get(context)
+
+	var parsedDate time.Time
+	date, ok := frontMatter["date"]
+	if ok {
+		parsedDate, err = time.Parse("2006-01-02", date.(string))
+		if err != nil {
+			log.Fatalf("[Error Parsing Time (%v)] - %v", date.(string), err)
+		}
+	}
+
+	var templateFile string
+	if getMapValue(frontMatter, "template") == "" {
+		templateFile = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+	} else {
+		templateFile = getMapValue(frontMatter, "template")
+	}
+
+	page := Page{
+		Title:        getMapValue(frontMatter, "title"),
+		Date:         parsedDate,
+		Template:     templateFile,
+		OldExtension: filepath.Ext(path),
+		NewExtension: ".html",
+		FileName:     filepath.Base(path),
+		Content:      template.HTML(buff.Bytes()),
+		MetaData:     make(map[string]interface{}),
+		FluxConfig:   config,
+	}
+
+	page.setHref(path)
+
+	for k, v := range frontMatter {
+		if k != "title" && k != "date" && k != "template" {
+			page.MetaData[k] = v
+		}
+	}
+	return page
 }

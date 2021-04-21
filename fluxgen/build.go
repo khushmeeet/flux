@@ -1,15 +1,8 @@
 package fluxgen
 
 import (
-	"bytes"
 	"encoding/json"
 	"fmt"
-	"github.com/Masterminds/sprig"
-	"github.com/yuin/goldmark"
-	highlighting "github.com/yuin/goldmark-highlighting"
-	meta "github.com/yuin/goldmark-meta"
-	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
 	"html/template"
 	"io/fs"
 	"io/ioutil"
@@ -111,93 +104,6 @@ func parseHTMLTemplates(path string, pages Pages, posts Pages) {
 		fmt.Printf("Writing File: %v\n", p.Href+p.OldExtension)
 	}
 }
-
-func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
-	buffer := new(bytes.Buffer)
-	templateFile := p.Template + ".html"
-	err := t.ExecuteTemplate(buffer, templateFile, p)
-	if err != nil {
-		return nil, err
-	}
-	return buffer, nil
-}
-
-func parseMarkdown(path string, config *FluxConfig) Page {
-	var buff bytes.Buffer
-	context := parser.NewContext()
-	md := goldmark.New(
-		goldmark.WithExtensions(meta.Meta,
-			highlighting.NewHighlighting(
-				highlighting.WithStyle("dracula"))),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
-		),
-	)
-
-	file, err := ioutil.ReadFile(path)
-	if err != nil {
-		log.Fatalf("[Error Reading (%v)] - %v", path, err)
-	}
-
-	err = md.Convert(file, &buff, parser.WithContext(context))
-	if err != nil {
-		log.Fatalf("[Error Parsing Markdown File (%v)] - %v", path, err)
-	}
-	frontMatter := meta.Get(context)
-
-	var parsedDate time.Time
-	date, ok := frontMatter["date"]
-	if ok {
-		parsedDate, err = time.Parse("2006-01-02", date.(string))
-		if err != nil {
-			log.Fatalf("[Error Parsing Time (%v)] - %v", date.(string), err)
-		}
-	}
-
-	var templateFile string
-	if getMapValue(frontMatter, "template") == "" {
-		templateFile = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	} else {
-		templateFile = getMapValue(frontMatter, "template")
-	}
-
-	page := Page{
-		Title:        getMapValue(frontMatter, "title"),
-		Date:         parsedDate,
-		Template:     templateFile,
-		OldExtension: filepath.Ext(path),
-		NewExtension: ".html",
-		FileName:     filepath.Base(path),
-		Content:      template.HTML(buff.Bytes()),
-		MetaData:     make(map[string]interface{}),
-		FluxConfig:   config,
-	}
-
-	page.setHref(path)
-
-	for k, v := range frontMatter {
-		if k != "title" && k != "date" && k != "template" {
-			page.MetaData[k] = v
-		}
-	}
-	return page
-}
-
-//func processAssets(filePath string) {
-//	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-//		if !info.IsDir() && filepath.Ext(path) != ".md" && filepath.Ext(path) != ".html" {
-//			err := copyFile(path, filepath.Join(SiteFolder, filepath.Base(path)))
-//			fmt.Printf("Copying File: %v\n", path)
-//			if err != nil {
-//				return err
-//			}
-//		}
-//		return nil
-//	})
-//	if err != nil {
-//		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
-//	}
-//}
 
 func processStaticFolders(filePath string) {
 	if _, err := os.Stat(filePath); err == nil {
