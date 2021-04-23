@@ -7,16 +7,16 @@ import (
 )
 
 func FluxClean() {
-	err := os.RemoveAll(SiteFolder)
+	err := os.RemoveAll(SiteDir)
 	if err != nil {
 		log.Fatal("Unable to delete _site folder")
 	}
 
-	err = os.Mkdir(SiteFolder, 0777)
+	err = os.Mkdir(SiteDir, 0777)
 	if err != nil {
 		log.Fatal("Unable to create _site folder")
 	}
 
-	fmt.Printf("Flux %v cleaned!\n", SiteFolder)
+	fmt.Printf("Flux %v cleaned!\n", SiteDir)
 
 }

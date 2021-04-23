@@ -35,7 +35,7 @@ func Logger(out io.Writer, h http.Handler) http.Handler {
 }
 
 func FluxServe() {
-	http.Handle("/", http.FileServer(http.Dir(SiteFolder)))
+	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
 	if err := http.ListenAndServe(":5050", Logger(os.Stderr, http.DefaultServeMux)); err != nil {
 		log.Fatal("Unable to start http static server!")
 	}

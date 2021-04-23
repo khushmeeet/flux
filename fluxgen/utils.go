@@ -20,7 +20,7 @@ import (
 
 func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
-		p.Href = SiteFolder
+		p.Href = SiteDir
 	} else if filepath.Ext(path) == ".html" {
 		p.Href = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
 	} else {
@@ -73,9 +73,9 @@ func getMapValue(m map[string]interface{}, k string) string {
 func createFileWritePath(fileName string, filePath string) string {
 	fileWritePath := ""
 	if fileName == "index.html" {
-		fileWritePath = SiteFolder
+		fileWritePath = SiteDir
 	} else {
-		fileWritePath = filepath.Join(SiteFolder, filePath)
+		fileWritePath = filepath.Join(SiteDir, filePath)
 	}
 	return fileWritePath
 }

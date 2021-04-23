@@ -35,13 +35,13 @@ type FluxConfig map[string]interface{}
 func FluxBuild() {
 	FluxClean()
 	fluxConfig := parseFluxConfig(ConfigFile)
-	pageList, postList := parsePages(PagesFolder, &fluxConfig)
+	resources := loadResources(CSSDir)
+	pageList, postList := parsePages(PagesDir, &fluxConfig, &resources)
 	By(descendingOrderByDate).Sort(pageList)
 	By(descendingOrderByDate).Sort(postList)
-	parseHTMLTemplates(TemplatesFolder, pageList, postList)
-	//processAssets(PagesFolder)
-	processStaticFolders(CSSFolder)
-	processStaticFolders(AssetsFolder)
+	parseHTMLTemplates(TemplatesDir, pageList, postList)
+	processStaticFolders(CSSDir)
+	processStaticFolders(AssetsDir)
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -77,8 +77,8 @@ func parsePages(filePath string, config *FluxConfig) (Pages, Pages) {
 }
 
 func parseHTMLTemplates(path string, pages Pages, posts Pages) {
-	pagesList, _ := filepath.Glob(PagesFolder + "/*.html")
-	templatesList, _ := filepath.Glob(TemplatesFolder + "/*.html")
+	pagesList, _ := filepath.Glob(PagesDir + "/*.html")
+	templatesList, _ := filepath.Glob(TemplatesDir + "/*.html")
 	allTemplatesList := append(pagesList, templatesList...)
 
 	tmpl, err := template.New("index").Funcs(sprig.FuncMap()).ParseFiles(allTemplatesList...)
@@ -109,13 +109,13 @@ func processStaticFolders(filePath string) {
 	if _, err := os.Stat(filePath); err == nil {
 		err = filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
 			if info.IsDir() {
-				err := os.MkdirAll(filepath.Join(SiteFolder, path), 0744)
+				err := os.MkdirAll(filepath.Join(SiteDir, path), 0744)
 				if err != nil {
 					return err
 				}
 				fmt.Printf("Creating Folder: %v\n", path)
 			} else {
-				err := copyFile(path, filepath.Join(SiteFolder, path))
+				err := copyFile(path, filepath.Join(SiteDir, path))
 				if err != nil {
 					return err
 				}
