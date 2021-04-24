@@ -1,0 +1,37 @@
+
+<html lang="en">
+<head>
+    <title>Setting custom domain in heroku</title>
+    <link rel="stylesheet" href="Few%20steps%20on%20how%20to%20setup%20domain%20to%20work%20with%20your%20heroku%20app">
+</head>
+
+<body>
+    
+<div class="home">
+    <section class="animated">
+        <header>
+            <img class="head-img" src="/assets/me.jpg" alt="Khushmeet Singh">
+            <h1 class="home-heading">Khushmeet Singh</h1>
+            <p>Python , Web , Tensorflow , Deep learning , Linux <i class="fa fa-heart heart" aria-hidden="true" style="font-size:12px;"></i>'r </p>
+        </header>
+    </section>
+</div>
+<p>For adding a domain to your heroku app, process is pretty simple. For this tutorial, I will be using khushmeetsingh.com (my domain) as an example, which I bought from GoDaddy.</p>
+<p>Here are few steps you need to follow, to get this going.</p>
+<p><strong>Step 1 -</strong> Add credit/debit card to your heroku app. No charges will be made. This is just for verification. You need to do this before you setup custom domain.</p>
+<p><strong>Step 2 -</strong> Go to your domain registrar and open <strong>DNS Settings</strong>. There is a list of records. Just create a new record of type <strong>CNAME</strong> with alias <code>www</code> and host name <code>proxy.heroku.com</code>.</p>
+<p><strong>Step 3 -</strong> To verify your previous step, do <code>ping www.domain.com</code>. This should give <code>proxy.heroku.com</code> for ping.</p>
+<p><strong>Step 4 -</strong> If that is successful, its time to add domain to heroku. Your do this either in the command line of the dashboard. Here is the command of that <code>heroku domains:add www.domain.com --app herokuapp</code>. This added domain for <code>www</code> but we also want our site to open when we enter domain without <code>www</code> like this <code>domain.com</code>.</p>
+<p>For this enter the same command again, but this time do <code>heroku domains:add domain.com --app herokuapp</code>.</p>
+<p><strong>Step 5 -</strong> Visit your domain registrar (last time). Under domain forwarding(domain), add a domain. Add forward to <code>www.domain.com</code>, keep <code>http://</code> as is, unless you have SSL certificate.</p>
+<p>Keep direct type as <code>301 (Permanent)</code>. Forward setting as <code>forward only</code>.<br>
+Check <code>update nameservers and DNS settings</code>.</p>
+<p>That's it, now your domain is setup. Run domain.com and you will be greeted with heroku app.</p>
+
+
+    
+<footer>
+  This is footer
+</footer>
+
+</body>

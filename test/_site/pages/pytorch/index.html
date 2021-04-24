@@ -1,0 +1,63 @@
+
+<html lang="en">
+<head>
+    <title>What is PyTorch?</title>
+    <link rel="stylesheet" href="A%20lightweight%20introduction%20to%20PyTorch.">
+</head>
+
+<body>
+    
+<div class="home">
+    <section class="animated">
+        <header>
+            <img class="head-img" src="/assets/me.jpg" alt="Khushmeet Singh">
+            <h1 class="home-heading">Khushmeet Singh</h1>
+            <p>Python , Web , Tensorflow , Deep learning , Linux <i class="fa fa-heart heart" aria-hidden="true" style="font-size:12px;"></i>'r </p>
+        </header>
+    </section>
+</div>
+<p>PyTorch is a scientific computing package for python built by facebook and several other companies and universities. It provides numpy like computation APIs but with strong support<br>
+for GPUs. It also supports deep learning specific APIs, for building models and training them. Let's have a quick look at PyTorch.</p>
+<h2>Comparing with tensorflow</h2>
+<p>PyTorch is very much like tensorflow, in a sense that both are used to build complex deep learning models, train them and test them. Both support <strong>computational graphs</strong>, have built-in different kind of layers, optimizers and other utils. But under the hood they are very much different.</p>
+<p>Tensorflow, developed by Google was intended to be a library for building production grade models, that can scale better. Hence tensorflow is static in nature. What this means is that, first we define out model from beginning to the end and them execute them. This lets the tensorflow to optimize the graph by, lets say fusing the nodes together or removing redundant nodes. They have even developed a compiler to do all that stuff called <strong>XLA Compiler</strong>. Where as PyTorch is dynamic in nature. Meaning graph gets executed as soon as some node gets attached. The technique used here to achieve this is <strong>Reverse-mode auto-differentiation</strong>.</p>
+<p>Other major difference that can be found is that PyTorch is imperative in nature. It means that all the usual python constructs like loop, if-else can be used within PyTorch, unlike tensorflow, where we have to use these constructs as nodes in the graph, like <code>tf.while_loop</code>.</p>
+<p>PyTorch is designed for rapid prototyping. Hence more and more researchers are now using it in their reseach findings. But tensorflow still remains very popular.</p>
+<h2>Getting hands dirty</h2>
+<p>We import PyTorch with <code>import torch</code>. Lets construct a 3x3 matrix. We do something like.</p>
+<pre style="color:#f8f8f2;background-color:#282a36">mat <span style="color:#ff79c6">=</span> torch<span style="color:#ff79c6">.</span>Tensor(<span style="color:#bd93f9">3</span>,<span style="color:#bd93f9">3</span>)
+</pre><p>This will immideatily give us a 3x3 matrix, something like</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> <span style="color:#bd93f9">0.0000e+00</span>  <span style="color:#bd93f9">1.0842e-19</span>  <span style="color:#bd93f9">9.7721e-38</span>
+ <span style="color:#bd93f9">3.6902e+19</span>  <span style="color:#bd93f9">1.1210e-44</span> <span style="color:#ff79c6">-</span><span style="color:#bd93f9">0.0000e+00</span>
+ <span style="color:#bd93f9">0.0000e+00</span>  <span style="color:#bd93f9">0.0000e+00</span>  <span style="color:#bd93f9">0.0000e+00</span>
+[torch<span style="color:#ff79c6">.</span>FloatTensor of size <span style="color:#bd93f9">3</span>x3]
+</pre><p>As we discussed above, PyTorch executes the statement immediately instead of defining a session, like we do in tensorflow.</p>
+<p>Similarly, there several functions to declare tensors and operate on them. We can also convert them to numpy array and vice versa.</p>
+<p>Since we are doing deep learning here, GPUs are must. So in PyTorch, we have this to run our operations in GPU.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"><span style="color:#ff79c6">if</span> torch<span style="color:#ff79c6">.</span>cuda<span style="color:#ff79c6">.</span>is_available():
+    y <span style="color:#ff79c6">=</span> torch<span style="color:#ff79c6">.</span>Tensor(<span style="color:#bd93f9">5</span>,<span style="color:#bd93f9">5</span>)
+</pre><h2>Going deeper</h2>
+<p>Ofcourse when doing deep learning, we do backpropagation. And for that we need differentiation. Thankfully PyTorch has a built-in package <strong>autograd</strong> for automatic differentiation.</p>
+<p>For this, autograd package has <code>Variable</code> class, that wraps a tensor. When these tensors undergo differentiation, there data remians under <code>.data</code> attribute and gradient under <code>.grad</code> attribute of Variable class.</p>
+<p><img src="%7B%7Bsite.url%7D%7D/assets/Variable.png" alt="Variable"><br>
+<em>from pytorch.org</em></p>
+<p>To do gradient calculation, we call <code>.backward()</code>. We also need to speccify <code>requires_grad=True</code> when defining variable to calculate gradient of this variable when calling <code>.backard()</code>.</p>
+<p>Here's some code</p>
+<pre style="color:#f8f8f2;background-color:#282a36">x <span style="color:#ff79c6">=</span> torch<span style="color:#ff79c6">.</span>autograd<span style="color:#ff79c6">.</span>Variable(torch<span style="color:#ff79c6">.</span>rand(<span style="color:#bd93f9">1</span>), requires_grad<span style="color:#ff79c6">=</span>True)
+y <span style="color:#ff79c6">=</span> x <span style="color:#ff79c6">+</span> <span style="color:#bd93f9">14</span>
+y<span style="color:#ff79c6">.</span>backward()
+</pre><p>We get out gradients accumulated in</p>
+<pre style="color:#f8f8f2;background-color:#282a36">x<span style="color:#ff79c6">.</span>grad
+</pre><p>output:</p>
+<pre style="color:#f8f8f2;background-color:#282a36">Variable containing:
+ <span style="color:#bd93f9">1</span>
+[torch<span style="color:#ff79c6">.</span>FloatTensor of size <span style="color:#bd93f9">1</span>]
+</pre><p>Well that's pretty much it. In next post we will look at <code>nn</code> package and build a CNN for MNIST data using PyTorch.</p>
+
+
+    
+<footer>
+  This is footer
+</footer>
+
+</body>

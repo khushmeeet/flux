@@ -1,0 +1,132 @@
+
+<html lang="en">
+<head>
+    <title>Intro to Blockchain</title>
+    <link rel="stylesheet" href="A%20simple%20guide%20on%20what%20is%20a%20blockchain%20and%20related%20cryptocurrencies">
+</head>
+
+<body>
+    
+<div class="home">
+    <section class="animated">
+        <header>
+            <img class="head-img" src="/assets/me.jpg" alt="Khushmeet Singh">
+            <h1 class="home-heading">Khushmeet Singh</h1>
+            <p>Python , Web , Tensorflow , Deep learning , Linux <i class="fa fa-heart heart" aria-hidden="true" style="font-size:12px;"></i>'r </p>
+        </header>
+    </section>
+</div>
+<p>Blockchain right now is the most hyped technology and is being touted as the<br>
+next step in the digitization of our economy, moving from centralized systems to<br>
+decentralized systems where no one controls the system. Blockchain is nothing<br>
+but a public ledger, where your transactions get recorded. First distributed<br>
+blockchain was conceived by Satoshi Nakamoto (no one knows who he is) in 2008<br>
+and in the following year implemented <strong>Bitcoin</strong> cryptocurrency with blockchain<br>
+serving as its public ledger. Since then bitcoin has grown exponentially and<br>
+current exchange for 1BTC (Bitcoin) is 4352.24 US Dollars. Many more<br>
+cryptocurrencies have also made their way into the market like <strong>litecoin</strong> or<br>
+<strong>zcash</strong> and many more. The second largest player in cryptocurrencies is<br>
+<strong>ethereum</strong>. Ethereum by the way is much more than just a blockchain and<br>
+cryptocurrency. It is a platform for building applications for that runs on<br>
+ethereum blockchain. Ofcourse we will discuss ethereum in a seperate article.</p>
+<p>For now let's get down to how blockchain works and where do these currencies<br>
+come from.</p>
+<h3>Securing the ledger</h3>
+<p>Now to understand how blockchain works, we need to understand our current system<br>
+and how blockchain solves the problems associated with it.</p>
+<p>Right now we have a centralized entity, that records our transaction or we can<br>
+say acts a mediator between the sender and the receiver. The working of the<br>
+entity is opaque, we don't know how they operate, they may be corrupt (common<br>
+with government institutions) or may be biased to some customers.</p>
+<p>Or OK!, let's forget about all this stuff and start with a very simple case of 4<br>
+people (Alice, Bob, John, Chris) trying to manage money splits among them.</p>
+<p>They start by creating a public ledger, where everyone writes who need to pay to<br>
+whom and how much. Its an okay way to manage the debt, but this requires trust.<br>
+It's a public ledger which means that anybody can write to it. So maybe Bob<br>
+writes <code>John pays Bob 50$</code> without him telling. Now cryptography comes into<br>
+play. System of <strong>Public Keys and Private Keys</strong> are leveraged to produce and<br>
+authenticate <strong>digital signature</strong> of a person. Every person has a set of public/private key. Private key is kept secret and public key is well.. public. Whenever a new transaction is added to ledger, it gets signed by the person using the private key like this.</p>
+<pre><code>Sign(message, private key) -&gt; Signature
+</code></pre>
+<p>These signatures are irreversible, meaning that you cannot derive message just<br>
+by looking at the signature. And such signatures are usually 256bit long (2^256 possibilities!!) hence<br>
+guessing is impossible. Therefore it is safe to say that these signatures can be<br>
+trusted.</p>
+<p>Now to verify that the transaction is not forged, we use public key (anyone can<br>
+verify). Something like this</p>
+<pre><code>Verify(message, signature, public key) -&gt; True/False
+</code></pre>
+<p>This verify functions tells us that the message is signed by the private key<br>
+associated with the public key that we are using.</p>
+<p>Now to prevent a person from just copying the whole message again (because the<br>
+signature remains same for same message) a unique id is added with the message,<br>
+which becomes</p>
+<pre><code>Sign(message, unique id, private key) -&gt; Signature
+</code></pre>
+<p>Now signature is changing with every transaction added to ledger, hence no<br>
+copying/forging possible.</p>
+<p>But still, if you see our ledger system is centralized. This is where concept of<br>
+blockchain is introduced. The whole point of doing blockchain thing is to remove<br>
+trust on one single entity or to remove trust altogether and let the rules and<br>
+protocol do its work.</p>
+<h3>Blockchain</h3>
+<p>As we know our ledger is just a table of recorded transactions. But to remove<br>
+that trust, to remove that centralization, everyone can hold a copy of<br>
+transaction. Hereby removing the need for handing over the ledger to someone for<br>
+maintenance.</p>
+<p>To add a transaction, a broadcast will be made, so that every ledger remains in<br>
+sync (decentralized).</p>
+<p>But we have a problem here, there is no guarantee that when a transaction is<br>
+made it will get added to every other ledger. Simply put there is no way to<br>
+authenticate that the broadcast was original. This is a very flawed way of<br>
+syncing the ledger, just listening to the broadcast.</p>
+<p>This very problem was addressed in the original bitcoin paper. Here is a <a href="https://bitcoin.org/bitcoin.pdf">link</a> to it.</p>
+<p>General idea here is that the ledger with highest amount of computational word<br>
+is the true ledger. This computational work involves cryptographic hash<br>
+function. This means that for someone to produce a fraudulent transaction would<br>
+require an insane amount of computation, which is pretty infeasible.</p>
+<p>The hash function generally used in cryptocurrencies is <strong>SHA256</strong>. SHA256 is<br>
+highly random in nature. Meaning, just a slight change in input results in<br>
+complete change of hash value. And even though there is no actual proof, SHA256<br>
+is considered irreversible. Input cannot be produced from the output.</p>
+<p>Now to use SHA256 to define computational work, hash is calculated for the<br>
+ledger. The way it is done is that a condition is given on the hash value. Let's<br>
+say the condition here is that 30 zeros should be there at the starting of the hash. So we need to find a number that when added with the ledger and calculated the SHA256 of the whole thing gives us that hash with 30 zeros at the beginning. The only way this can be done is by iterating through every number and check whether its hash satisfies the condition. This is called the <strong>proof of work</strong> (PoW). Proof that this person has done work without the need to verify. This hash is tied to the ledger itself. Therefore any change in ledger, will change its hash and all the work needs to be done again.</p>
+<p>Now to make a distributed tamper proof ledger, the ledger is divided into<br>
+blocks. Each blocks has list of transactions together with the proof of work.<br>
+The block is valid only when it has a proof of work. Now to maintain order and<br>
+timeliness to the blocks, hash of the previous block is added to the next block<br>
+hence SHA256 of a block becomes</p>
+<pre><code>SHA256(hash of previous block, transactions, PoW) -&gt; Hash
+</code></pre>
+<p>Who calculates these hashes?. Miners do. Miners (block creators) collect the<br>
+transaction and then do the proof of work. When a new hash is created, meaning a<br>
+block is created, it gets added to the block chain. And the first person to do<br>
+so will get a payment of the that cryptocurrency. So with every block created,<br>
+the amount of currency will increase.</p>
+<p>How this system is tamper proof?. Let's say Alice tries to fool Charlie by<br>
+adding a payment from Charlie to Alice. Therefore she hash to calculate the hash<br>
+of the block first to add it to the blockchain. But she has to do all of the<br>
+work herself to maintain that version of the blockchain. But will eventually be<br>
+overpowered by every other miner, as she would require more than 50% of the computing power to quickly calculate hash which isn't feasible.<br>
+Therefore her blockchain will fall short of the rest and therefore only the<br>
+longest blockchain prevails or is trustable.</p>
+<p>So this is how a blockchain works. Blocks of transactions joined linearly in a<br>
+list. Everybody having his/her own copy of blockchain. Miners adding more<br>
+blocks every few minutes. Protected with a hash function.<br>
+This makes a pretty reliable decentralized system.</p>
+<p>This is how bitcoin and several other currencies works. Though ethereum goes a<br>
+bit far by enabling blockchain for not just transactions, but any kind of<br>
+application.</p>
+<p>A link to a fantastic video on blockchain and cryptocurrencies by<br>
+<a href="https://www.youtube.com/channel/UCYO_jab_esuFRV4b17AJtAw">3Blue1Brown</a> -<br>
+<a href="https://www.youtube.com/watch?v=bBC-nXj3Ng4">Ever wonder how Bitcoin (and other cryptocurrencies) actually work?</a>.<br>
+This article is inspired by this video.</p>
+
+
+    
+<footer>
+  This is footer
+</footer>
+
+</body>

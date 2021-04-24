@@ -1,0 +1,123 @@
+
+<html lang="en">
+<head>
+    <title>How to run upspin on GCE</title>
+    <link rel="stylesheet" href="Tutorial%20on%20how%20to%20setup%20upspinserver%20on%20Google%20Compute%20Engine">
+</head>
+
+<body>
+    
+<div class="home">
+    <section class="animated">
+        <header>
+            <img class="head-img" src="/assets/me.jpg" alt="Khushmeet Singh">
+            <h1 class="home-heading">Khushmeet Singh</h1>
+            <p>Python , Web , Tensorflow , Deep learning , Linux <i class="fa fa-heart heart" aria-hidden="true" style="font-size:12px;"></i>'r </p>
+        </header>
+    </section>
+</div>
+<p>This tutorial is going to be a step by step guide on how to setup upspinserver-gcp on Google Compute<br>
+Engine. This is not a tutorial on upspin and its architecture. For more on upspin you can go to<br>
+<a href="https://upspin.io/">upspin.io</a></p>
+<p><strong>Step 1 -</strong> Download the upspin binaries from <a href="https://upspin.io/dl/">here</a>.<br>
+Download the binaries according to your local machine.</p>
+<p><strong>Step 2 -</strong> Download Go programming language from <a href="https://golang.org/">Golang</a>.<br>
+We need this for compiling our server binary. We need GOPATH for our packages.<br>
+Add following line in your <code>.bash_profile</code> or <code>.zshrc</code> or any other shell you are using.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"><span style="color:#8be9fd;font-style:italic">export</span> <span style="color:#8be9fd;font-style:italic">GOPATH</span><span style="color:#ff79c6">=</span>~/some_folder/go
+<span style="color:#8be9fd;font-style:italic">export</span> <span style="color:#8be9fd;font-style:italic">PATH</span><span style="color:#ff79c6">=</span><span style="color:#8be9fd;font-style:italic">$PATH</span>:<span style="color:#8be9fd;font-style:italic">$GOPATH</span>/bin
+</pre><p><strong>Step 3 -</strong> This is upspin signup process. We will use our email to register. Our email will<br>
+act as our identity in upspin namespace. Do</p>
+<pre style="color:#f8f8f2;background-color:#282a36">local$ upspin signup -server<span style="color:#ff79c6">=</span>upspin.your-domain.com you@gmail.com
+</pre><p>Use -<code>-server</code> since both dir and store is going to be hosted on GCE instance.<br>
+<code>upspin.your-domain.com</code> will point to that GCE instance.<br>
+It will spit config file, storing the dir and store reference among other things<br>
+and seed key in case you lost your private key. Write down your seed key and keep it safe.</p>
+<p><strong>Step 4 -</strong> Now we need to setup our domain. Do</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ upspin setupdomain -domain<span style="color:#ff79c6">=</span>your-domain.com
+</pre><p>It will spit out the record that you need to put in your domain's DNS zone.<br>
+Here's how you gonna do that.</p>
+<p><img src="%7B%7Bsite.url%7D%7D/assets/dns.png" alt="DNS Record">{:style=&quot;max-width: -webkit-fill-available&quot;}</p>
+<p>My registrat is cloudflare. UI could be different, but the record remains the same.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ host -t TXT your-domain.com
+</pre><p>Use host utility to check if changes has propagated.</p>
+<p><strong>Step 5 -</strong> Compile upspinserver-gcp to deploy on GCE. This should be compiled for linux, since<br>
+we are using ubuntu 16.04 LTS for GCE instance.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ go get -d gcp.upspin.io/cmd/...
+ local$ go install gcp.upspin.io/cmd/upspin-setupstorage-gcp
+ local$ <span style="color:#8be9fd;font-style:italic">GOOS</span><span style="color:#ff79c6">=</span>linux <span style="color:#8be9fd;font-style:italic">GOARCH</span><span style="color:#ff79c6">=</span>amd64 go build gcp.upspin.io/cmd/upspinserver-gcp
+</pre><p>Create a google cloud project (standard stuff) and download sdk from <a href="https://cloud.google.com/sdk/downloads">here</a>.<br>
+Now we need to enable certain APIs for our project.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ gcloud components install beta
+ local$ gcloud config <span style="color:#8be9fd;font-style:italic">set</span> project example-com
+ local$ gcloud auth login
+ local$ gcloud beta service-management <span style="color:#8be9fd;font-style:italic">enable</span> iam.googleapis.com
+ local$ gcloud beta service-management <span style="color:#8be9fd;font-style:italic">enable</span> storage_api
+</pre><p>Authenticate yourself.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ gcloud auth application-default login
+</pre><p>Now create google storage bucket and its service account. This is going to used, when creating our VM instance.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ upspin setupstorage-gcp -domain<span style="color:#ff79c6">=</span>your-domain.com -project<span style="color:#ff79c6">=</span>project-id bucket-name
+</pre><p><strong>Step 6 -</strong> Create a GCE VM. Use micro or small machine type. Select <code>Allow HTTPS traffic</code>.<br>
+Make sure external IP is enabled, reserved static address (important).<br>
+Generate a ssh key</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> ssh-keygen -t rsa -f ~/.ssh/<span style="color:#ff79c6">[</span>KEY_FILENAME<span style="color:#ff79c6">]</span> -C <span style="color:#ff79c6">[</span>USERNAME<span style="color:#ff79c6">]</span>
+</pre><p>Add the public key of this key pair to your VM. This lets you access VM from your terminal using SSH.</p>
+<p><strong>Step 7 -</strong> Create a <code>A</code> DNS record. Your subdomain pointing to VM (external IP).<br>
+<img src="%7B%7Bsite.url%7D%7D/assets/adns.png" alt="A DNS">{:style=&quot;max-width: -webkit-fill-available&quot;}</p>
+<p><strong>Step 8-</strong> With domain in place. Login to your VM.<br>
+Do <code>passwd</code> to set new UNIX password.<br>
+Then add your public key that you generated in step 6 to this VM user.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> serve$ mkdir .ssh
+ server$ chmod <span style="color:#bd93f9">0700</span> .ssh
+ server$ touch .ssh/authorized_keys
+ server$ chmod <span style="color:#bd93f9">0600</span> .ssh/authorized_keys
+ server$ cat &gt; .ssh/authorized_keys
+ <span style="color:#ff79c6">(</span>Paste your SSH public key here and <span style="color:#8be9fd;font-style:italic">type</span> Control-D and Enter<span style="color:#ff79c6">)</span>
+</pre><p><strong>Step 9 -</strong> Copy your compiled for linux <code>upspinserver-gcp</code> binary to your VM</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ scp -i ~/.ssh/ssh_key upspinserver-gcp user@upspin.your-domain.com:upspinserver
+</pre><p><code>ssh_key</code> is your private key for which you uploaded its corresponding public key.</p>
+<p><strong>Step 10 -</strong> Create an upspin service to let it run on the background and also start itself on boot.<br>
+Do this as root <code>sudo su</code>.<br>
+Create the file <code>/etc/systemd/system/upspinserver.service</code> that contains the following service definition.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> <span style="color:#ff79c6">[</span>Unit<span style="color:#ff79c6">]</span>
+ <span style="color:#8be9fd;font-style:italic">Description</span><span style="color:#ff79c6">=</span>Upspin server
+
+ <span style="color:#ff79c6">[</span>Service<span style="color:#ff79c6">]</span>
+ <span style="color:#8be9fd;font-style:italic">ExecStart</span><span style="color:#ff79c6">=</span>/home/upspin/upspinserver
+ <span style="color:#8be9fd;font-style:italic">User</span><span style="color:#ff79c6">=</span>upspin
+ <span style="color:#8be9fd;font-style:italic">Group</span><span style="color:#ff79c6">=</span>upspin
+ <span style="color:#8be9fd;font-style:italic">Restart</span><span style="color:#ff79c6">=</span>on-failure
+
+ <span style="color:#ff79c6">[</span>Install<span style="color:#ff79c6">]</span>
+ <span style="color:#8be9fd;font-style:italic">WantedBy</span><span style="color:#ff79c6">=</span>multi-user.target
+</pre><p><strong>Step 11 -</strong> Bind the service to port <code>443</code>. Do as root.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> server% setcap <span style="color:#8be9fd;font-style:italic">cap_net_bind_service</span><span style="color:#ff79c6">=</span>+ep /home/user/upspinserver
+</pre><p>User is you.</p>
+<p><strong>Step 12 -</strong> Start the service. Do as root.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> server% systemctl <span style="color:#8be9fd;font-style:italic">enable</span> --now /etc/systemd/system/upspinserver.service
+</pre><p>You may also use systemctl stop upspinserver and systemctl restart upspinserver to stop and restart the server, respectively.<br>
+Check the log of the server.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> server% journalctl -f -u upspinserver
+</pre><p>Logs should output <code>Configuration file not found. Running in setup mode.</code>.<br>
+And if you open <code>https://upspin.your-domain.com/</code> you should see<br>
+<code>Unconfigured Upspin Server</code>. Which means its running.</p>
+<p><strong>Step 13 -</strong> On your local machine, run this command to send server keys to config to upspin server<br>
+instance.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ upspin setupserver -domain<span style="color:#ff79c6">=</span>your-domain.com -host<span style="color:#ff79c6">=</span>upspin.your-domain.com
+</pre><p><strong>Step 14 -</strong> Test your server by running</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ <span style="color:#8be9fd;font-style:italic">echo</span> Hello, Upspin | upspin put you@gmail.com/hello
+ local$ upspin get you@gmail.com/hello
+ Hello, Upspin
+</pre><p>You can mount upspin as virtual file system by using osxfuse(FUSE filesystem) on macOS and similar program on linux. Not sure about windows. <code>upspinfs</code> lets you mount upspin namespace.</p>
+<pre style="color:#f8f8f2;background-color:#282a36"> local$ mkdir <span style="color:#8be9fd;font-style:italic">$HOME</span>/up
+ local$ upspinfs <span style="color:#8be9fd;font-style:italic">$HOME</span>/up
+ local$ ls <span style="color:#8be9fd;font-style:italic">$HOME</span>/up/you@gmail.com
+</pre><p>Or you can use upspin <a href="https://github.com/jnglco/browser">browser</a> built on electron.</p>
+
+
+    
+<footer>
+  This is footer
+</footer>
+
+</body>

@@ -1,0 +1,12 @@
+{{ define "default" }}
+<html lang="en">
+<head>
+    <title>{{ .Title }}</title>
+    <link rel="stylesheet" href="{{ .MetaData.shortie }}">
+</head>
+
+<body>
+    {{ block "content" . }}{{ end }}
+    {{ template "footer" }}
+</body>
+{{ end }}

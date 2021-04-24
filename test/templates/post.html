@@ -1,0 +1,13 @@
+{{ template "default" . }}
+{{ define "content2" }}
+<section class="article">
+    <article>
+        <header>
+            <h1>{{ .Title }}</h1>
+        </header>
+        <section class="body">
+            {{ .Content }}
+        </section>
+    </article>
+</section>
+{{ end }}

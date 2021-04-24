@@ -1,0 +1,15 @@
+{
+  "site_title":"test",
+  "email":"hello@flux.com",
+  "twitter_username":"@test",
+  "github_username":"test",
+  "list": [
+    "1",
+    "2",
+    "3"
+  ],
+  "map": {
+    "a": 1,
+    "b": 2
+  }
+}
