@@ -30,8 +30,8 @@ func (p *Page) setHref(path string) {
 
 func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
 	buffer := new(bytes.Buffer)
-	templateFile := p.Template + ".html"
-	err := t.ExecuteTemplate(buffer, templateFile, p)
+	//templateFile := p.Template + p.NewExtension
+	err := t.Execute(buffer, p)
 	if err != nil {
 		return nil, err
 	}
@@ -63,13 +63,6 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-func getMapValue(m map[string]interface{}, k string) string {
-	if val, ok := m[k]; ok {
-		return val.(string)
-	}
-	return ""
-}
-
 func createFileWritePath(fileName string, filePath string) string {
 	fileWritePath := ""
 	if fileName == "index.html" {
@@ -88,7 +81,14 @@ func createFileWriteDir(filePath string) {
 	}
 }
 
-func parseMarkdown(path string, config *FluxConfig) Page {
+func getHTMLTemplatesList() []string {
+	htmlPartials, _ := filepath.Glob(TemplatesDir + "/*.html")
+	htmlPages, _ := filepath.Glob("*.html")
+	htmlPages = append(htmlPages, htmlPartials...)
+	return htmlPages
+}
+
+func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 	var buff bytes.Buffer
 	context := parser.NewContext()
 	md := goldmark.New(
@@ -111,32 +111,22 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 	}
 	frontMatter := meta.Get(context)
 
-	var parsedDate time.Time
-	date, ok := frontMatter["date"]
-	if ok {
-		parsedDate, err = time.Parse("2006-01-02", date.(string))
-		if err != nil {
-			log.Fatalf("[Error Parsing Time (%v)] - %v", date.(string), err)
-		}
-	}
-
-	var templateFile string
-	if getMapValue(frontMatter, "template") == "" {
-		templateFile = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	} else {
-		templateFile = getMapValue(frontMatter, "template")
+	parsedDate, err := time.Parse("2006-01-02", frontMatter["date"].(string))
+	if err != nil {
+		log.Fatalf("[Error Parsing Time (%v)] - %v", frontMatter["date"].(string), err)
 	}
 
 	page := Page{
-		Title:        getMapValue(frontMatter, "title"),
+		Title:        frontMatter["title"].(string),
 		Date:         parsedDate,
-		Template:     templateFile,
+		Template:     frontMatter["template"].(string),
 		OldExtension: filepath.Ext(path),
 		NewExtension: ".html",
 		FileName:     filepath.Base(path),
 		Content:      template.HTML(buff.Bytes()),
 		MetaData:     make(map[string]interface{}),
 		FluxConfig:   config,
+		Resources:    r,
 	}
 
 	page.setHref(path)
@@ -146,5 +136,28 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 			page.MetaData[k] = v
 		}
 	}
+	return page
+}
+
+func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
+	//file, err := ioutil.ReadFile(path)
+	//if err != nil {
+	//	log.Fatalf("[Error Reading (%v)] - %v", path, err)
+	//}
+
+	page := Page{
+		Title:        "",
+		Date:         time.Time{},
+		Template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
+		OldExtension: filepath.Ext(path),
+		NewExtension: ".html",
+		FileName:     filepath.Base(path),
+		Content:      "",
+		MetaData:     make(map[string]interface{}),
+		FluxConfig:   config,
+		Resources:    resources,
+	}
+	page.setHref(path)
+
 	return page
 }
