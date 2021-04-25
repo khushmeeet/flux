@@ -3,6 +3,7 @@ package fluxgen
 import (
 	"bytes"
 	"fmt"
+	"github.com/flosch/pongo2/v4"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	meta "github.com/yuin/goldmark-meta"
@@ -20,22 +21,37 @@ import (
 
 func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
-		p.Href = SiteDir
+		p.Href = "/"
 	} else if filepath.Ext(path) == ".html" {
-		p.Href = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
+		p.Href = filepath.Join(strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
 	} else {
 		p.Href = strings.TrimSuffix(path, filepath.Base(path))
 	}
 }
 
-func (p *Page) applyTemplate(t *template.Template) (*bytes.Buffer, error) {
-	buffer := new(bytes.Buffer)
-	templateFile := p.Template + ".html"
-	err := t.ExecuteTemplate(buffer, templateFile, p)
+func (p *Page) applyTemplate() (string, error) {
+	tmpl, err := pongo2.FromFile(p.Template + ".html")
 	if err != nil {
-		return nil, err
+		panic(err)
 	}
-	return buffer, nil
+
+	fmt.Println(p.PostList)
+
+	ctx := pongo2.Context{
+		"title":     p.Title,
+		"date":      p.Date,
+		"content":   p.Content,
+		"meta":      p.MetaData,
+		"posts":     *p.PostList,
+		"flux":      p.FluxConfig,
+		"resources": p.Resources,
+	}
+
+	out, err := tmpl.Execute(ctx)
+	if err != nil {
+		return "", err
+	}
+	return out, nil
 }
 
 func copyFile(src, dst string) error {
@@ -63,13 +79,6 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-func getMapValue(m map[string]interface{}, k string) string {
-	if val, ok := m[k]; ok {
-		return val.(string)
-	}
-	return ""
-}
-
 func createFileWritePath(fileName string, filePath string) string {
 	fileWritePath := ""
 	if fileName == "index.html" {
@@ -88,7 +97,7 @@ func createFileWriteDir(filePath string) {
 	}
 }
 
-func parseMarkdown(path string, config *FluxConfig) Page {
+func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 	var buff bytes.Buffer
 	context := parser.NewContext()
 	md := goldmark.New(
@@ -111,40 +120,52 @@ func parseMarkdown(path string, config *FluxConfig) Page {
 	}
 	frontMatter := meta.Get(context)
 
-	var parsedDate time.Time
-	date, ok := frontMatter["date"]
-	if ok {
-		parsedDate, err = time.Parse("2006-01-02", date.(string))
-		if err != nil {
-			log.Fatalf("[Error Parsing Time (%v)] - %v", date.(string), err)
+	parsedDate, err := time.Parse("2006-01-02", frontMatter["date"].(string))
+	if err != nil {
+		log.Fatalf("[Error Parsing Time (%v)] - %v", frontMatter["date"].(string), err)
+	}
+
+	metaData := make(map[string]interface{})
+	for k, v := range frontMatter {
+		if k != "title" && k != "date" && k != "template" {
+			metaData[k] = v
 		}
 	}
 
-	var templateFile string
-	if getMapValue(frontMatter, "template") == "" {
-		templateFile = strings.TrimSuffix(filepath.Base(path), filepath.Ext(path))
-	} else {
-		templateFile = getMapValue(frontMatter, "template")
-	}
-
 	page := Page{
-		Title:        getMapValue(frontMatter, "title"),
+		Title:        frontMatter["title"].(string),
 		Date:         parsedDate,
-		Template:     templateFile,
+		Template:     filepath.Join(TemplatesDir, frontMatter["template"].(string)),
 		OldExtension: filepath.Ext(path),
 		NewExtension: ".html",
 		FileName:     filepath.Base(path),
 		Content:      template.HTML(buff.Bytes()),
 		MetaData:     make(map[string]interface{}),
 		FluxConfig:   config,
+		Resources:    r,
 	}
-
 	page.setHref(path)
+	return page
+}
 
-	for k, v := range frontMatter {
-		if k != "title" && k != "date" && k != "template" {
-			page.MetaData[k] = v
-		}
+func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
+	file, err := ioutil.ReadFile(path)
+	if err != nil {
+		log.Fatalf("[Error Reading (%v)] - %v", path, err)
 	}
+
+	page := Page{
+		Title:        "",
+		Date:         time.Time{},
+		Template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
+		OldExtension: filepath.Ext(path),
+		NewExtension: ".html",
+		FileName:     filepath.Base(path),
+		Content:      template.HTML(file),
+		MetaData:     make(map[string]interface{}),
+		FluxConfig:   config,
+		Resources:    resources,
+	}
+	page.setHref(path)
 	return page
 }

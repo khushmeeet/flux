@@ -23,25 +23,43 @@ type Page struct {
 	FileName     string
 	Content      template.HTML
 	MetaData     map[string]interface{}
-	PageList     *Pages
-	PostList     *Pages
-	FluxConfig   *FluxConfig
+	//PageList     *Pages
+	PostList   *Pages
+	Resources  *Resources
+	FluxConfig *FluxConfig
 }
 
 type Pages []Page
 
 type FluxConfig map[string]interface{}
 
+type Resources map[string]string
+
 func FluxBuild() {
 	FluxClean()
 	fluxConfig := parseFluxConfig(ConfigFile)
 	resources := loadResources(CSSDir)
-	pageList, postList := parsePages(PagesDir, &fluxConfig, &resources)
-	By(descendingOrderByDate).Sort(pageList)
+	pageList, postList := parsePages(&fluxConfig, &resources)
 	By(descendingOrderByDate).Sort(postList)
-	parseHTMLTemplates(TemplatesDir, pageList, postList)
+	parseHTMLTemplates(pageList, postList)
 	processStaticFolders(CSSDir)
 	processStaticFolders(AssetsDir)
+}
+
+func loadResources(path ...string) Resources {
+	resources := Resources{}
+	for _, i := range path {
+		err := filepath.WalkDir(i, func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() {
+				resources[strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))] = path
+			}
+			return nil
+		})
+		if err != nil {
+			log.Fatalf("Error walking (%v) - %v", i, err)
+		}
+	}
+	return resources
 }
 
 func parseFluxConfig(path string) FluxConfig {
@@ -57,39 +75,40 @@ func parseFluxConfig(path string) FluxConfig {
 	return fluxConfig
 }
 
-func parsePages(filePath string, config *FluxConfig) (Pages, Pages) {
+func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 	var pageList Pages
 	var postList Pages
-	err := filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && (filepath.Ext(path) == ".md" || filepath.Ext(path) == ".html") {
-			page := parseMarkdown(path, config)
-			pageList = append(pageList, page)
-			if filepath.Ext(path) == ".md" {
-				postList = append(postList, page)
-			}
+	err := filepath.Walk(PagesDir, func(path string, info fs.FileInfo, err error) error {
+		if !info.IsDir() && filepath.Ext(path) == ".md" {
+			mdPage := parseMarkdown(path, config, resources)
+			pageList = append(pageList, mdPage)
+			postList = append(postList, mdPage)
 		}
 		return nil
 	})
 	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+		log.Fatalf("[Error Walking (%v)] - %v", PagesDir, err)
 	}
+
+	dirContent, err := ioutil.ReadDir(".")
+	if err != nil {
+		log.Fatalf("[Error Reading (%v)] - %v", ".", err)
+	}
+
+	for _, f := range dirContent {
+		if !f.IsDir() && filepath.Ext(f.Name()) == ".html" {
+			htmlPage := parseHTML(f.Name(), config, resources)
+			pageList = append(pageList, htmlPage)
+		}
+	}
+
 	return pageList, postList
 }
 
-func parseHTMLTemplates(path string, pages Pages, posts Pages) {
-	pagesList, _ := filepath.Glob(PagesDir + "/*.html")
-	templatesList, _ := filepath.Glob(TemplatesDir + "/*.html")
-	allTemplatesList := append(pagesList, templatesList...)
-
-	tmpl, err := template.New("index").Funcs(sprig.FuncMap()).ParseFiles(allTemplatesList...)
-	if err != nil {
-		log.Fatalf("[Error Parsing Template Dir (%v)] - %v", path, err)
-	}
-
+func parseHTMLTemplates(pages Pages, posts Pages) {
 	for _, p := range pages {
-		p.PageList = &pages
 		p.PostList = &posts
-		buffer, err := p.applyTemplate(tmpl)
+		buffer, err := p.applyTemplate()
 		if err != nil {
 			log.Fatalf("[Error Applying Template to Page] - %v", err)
 		}
@@ -97,7 +116,7 @@ func parseHTMLTemplates(path string, pages Pages, posts Pages) {
 		fileWritePath := createFileWritePath(p.FileName, p.Href)
 		createFileWriteDir(fileWritePath)
 
-		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), buffer.Bytes(), 0744)
+		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), []byte(buffer), 0744)
 		if err != nil {
 			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
 		}
