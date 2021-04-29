@@ -23,10 +23,9 @@ type Page struct {
 	FileName     string
 	Content      template.HTML
 	MetaData     map[string]interface{}
-	//PageList     *Pages
-	PostList   *Pages
-	Resources  *Resources
-	FluxConfig *FluxConfig
+	PostList     *Pages
+	Resources    *Resources
+	FluxConfig   *FluxConfig
 }
 
 type Pages []Page
@@ -156,11 +155,30 @@ func processStaticFolders(filePath string) {
 				}
 				fmt.Printf("Creating Folder: %v\n", path)
 			} else {
-				err := copyFile(path, filepath.Join(SiteDir, path))
-				if err != nil {
-					return err
+				dstFilePath := filepath.Join(SiteDir, path)
+
+				if filepath.Ext(info.Name()) == ".scss" {
+					src, err := os.Open(path)
+					if err != nil {
+						log.Fatalf("error opening file: %v", err)
+					}
+					defer src.Close()
+
+					dst, err := os.Create(filepath.Join(SiteDir, strings.TrimSuffix(path, filepath.Ext(path))+".css"))
+					if err != nil {
+						log.Fatalf("error opening file: %v", err)
+					}
+					defer dst.Close()
+
+					c := createSassCompiler(src, dst)
+					c.compileSass()
+				} else {
+					err := copyFile(path, dstFilePath)
+					if err != nil {
+						return err
+					}
+					fmt.Printf("Copying File: %v\n", path)
 				}
-				fmt.Printf("Copying File: %v\n", path)
 			}
 			return nil
 		})
