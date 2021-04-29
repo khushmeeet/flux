@@ -42,6 +42,7 @@ func FluxBuild() {
 	pageList, postList := parsePages(&fluxConfig, &resources)
 	By(descendingOrderByDate).Sort(postList)
 	parseHTMLTemplates(pageList, postList)
+	processPageAssets(PagesDir)
 	processStaticFolders(CSSDir)
 	processStaticFolders(AssetsDir)
 }
@@ -121,6 +122,23 @@ func parseHTMLTemplates(pages Pages, posts Pages) {
 			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
 		}
 		fmt.Printf("Writing File: %v\n", p.Href+p.OldExtension)
+	}
+}
+
+func processPageAssets(dir string) {
+	if _, err := os.Stat(dir); err == nil {
+		err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() && filepath.Ext(path) != ".md" {
+				err := copyFile(path, filepath.Join(SiteDir, path))
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			log.Fatalf("error copying file [%v]", err)
+		}
 	}
 }
 

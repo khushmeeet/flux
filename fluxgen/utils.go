@@ -35,8 +35,6 @@ func (p *Page) applyTemplate() (string, error) {
 		panic(err)
 	}
 
-	fmt.Println(p.PostList)
-
 	ctx := pongo2.Context{
 		"title":     p.Title,
 		"date":      p.Date,
