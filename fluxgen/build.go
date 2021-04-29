@@ -38,7 +38,7 @@ type Resources map[string]string
 func FluxBuild() {
 	FluxClean()
 	fluxConfig := parseFluxConfig(ConfigFile)
-	resources := loadResources(CSSDir)
+	resources := loadResources(CSSDir, AssetsDir)
 	pageList, postList := parsePages(&fluxConfig, &resources)
 	By(descendingOrderByDate).Sort(postList)
 	parseHTMLTemplates(pageList, postList)
@@ -50,14 +50,16 @@ func FluxBuild() {
 func loadResources(path ...string) Resources {
 	resources := Resources{}
 	for _, i := range path {
-		err := filepath.WalkDir(i, func(path string, d fs.DirEntry, err error) error {
-			if !d.IsDir() {
-				resources[strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))] = path
+		if _, err := os.Stat(i); err == nil {
+			err := filepath.WalkDir(i, func(path string, d fs.DirEntry, err error) error {
+				if !d.IsDir() {
+					resources[strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))] = path
+				}
+				return nil
+			})
+			if err != nil {
+				log.Fatalf("Error walking (%v) - %v", i, err)
 			}
-			return nil
-		})
-		if err != nil {
-			log.Fatalf("Error walking (%v) - %v", i, err)
 		}
 	}
 	return resources
@@ -79,27 +81,29 @@ func parseFluxConfig(path string) FluxConfig {
 func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 	var pageList Pages
 	var postList Pages
-	err := filepath.Walk(PagesDir, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() && filepath.Ext(path) == ".md" {
-			mdPage := parseMarkdown(path, config, resources)
-			pageList = append(pageList, mdPage)
-			postList = append(postList, mdPage)
+	if _, err := os.Stat(PagesDir); err == nil {
+		err := filepath.Walk(PagesDir, func(path string, info fs.FileInfo, err error) error {
+			if !info.IsDir() && filepath.Ext(path) == ".md" {
+				mdPage := parseMarkdown(path, config, resources)
+				pageList = append(pageList, mdPage)
+				postList = append(postList, mdPage)
+			}
+			return nil
+		})
+		if err != nil {
+			log.Fatalf("[Error Walking (%v)] - %v", PagesDir, err)
 		}
-		return nil
-	})
-	if err != nil {
-		log.Fatalf("[Error Walking (%v)] - %v", PagesDir, err)
-	}
 
-	dirContent, err := ioutil.ReadDir(".")
-	if err != nil {
-		log.Fatalf("[Error Reading (%v)] - %v", ".", err)
-	}
+		dirContent, err := ioutil.ReadDir(".")
+		if err != nil {
+			log.Fatalf("[Error Reading (%v)] - %v", ".", err)
+		}
 
-	for _, f := range dirContent {
-		if !f.IsDir() && filepath.Ext(f.Name()) == ".html" {
-			htmlPage := parseHTML(f.Name(), config, resources)
-			pageList = append(pageList, htmlPage)
+		for _, f := range dirContent {
+			if !f.IsDir() && filepath.Ext(f.Name()) == ".html" {
+				htmlPage := parseHTML(f.Name(), config, resources)
+				pageList = append(pageList, htmlPage)
+			}
 		}
 	}
 

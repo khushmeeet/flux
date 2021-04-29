@@ -3,6 +3,7 @@ package fluxgen
 import (
 	"bytes"
 	"fmt"
+	"github.com/Joker/hpp"
 	"github.com/flosch/pongo2/v4"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
@@ -49,7 +50,7 @@ func (p *Page) applyTemplate() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return out, nil
+	return hpp.PrPrint(out), nil
 }
 
 func copyFile(src, dst string) error {
