@@ -81,8 +81,8 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 	var pageList Pages
 	var postList Pages
 	if _, err := os.Stat(PagesDir); err == nil {
-		err := filepath.Walk(PagesDir, func(path string, info fs.FileInfo, err error) error {
-			if !info.IsDir() && filepath.Ext(path) == ".md" {
+		err := filepath.WalkDir(PagesDir, func(path string, d fs.DirEntry, err error) error {
+			if !d.IsDir() && filepath.Ext(path) == ".md" {
 				mdPage := parseMarkdown(path, config, resources)
 				pageList = append(pageList, mdPage)
 				postList = append(postList, mdPage)
@@ -147,8 +147,8 @@ func processPageAssets(dir string) {
 
 func processStaticFolders(filePath string) {
 	if _, err := os.Stat(filePath); err == nil {
-		err = filepath.Walk(filePath, func(path string, info fs.FileInfo, err error) error {
-			if info.IsDir() {
+		err = filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() {
 				err := os.MkdirAll(filepath.Join(SiteDir, path), 0744)
 				if err != nil {
 					return err
@@ -157,7 +157,7 @@ func processStaticFolders(filePath string) {
 			} else {
 				dstFilePath := filepath.Join(SiteDir, path)
 
-				if filepath.Ext(info.Name()) == ".scss" {
+				if filepath.Ext(d.Name()) == ".scss" {
 					src, err := os.Open(path)
 					if err != nil {
 						log.Fatalf("error opening file: %v", err)

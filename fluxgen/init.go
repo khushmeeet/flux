@@ -18,7 +18,6 @@ type fluxConfig struct {
 
 func FluxInit(projectName string) {
 	currentDir, err := os.Getwd()
-
 	if err != nil {
 		log.Fatal("Unable to retrieve current working directory")
 	}
