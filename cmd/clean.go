@@ -11,6 +11,7 @@ var cleanCmd = &cobra.Command{
 	Use:   "clean",
 	Short: "Clean command will clean the output directory (_site)",
 	Long:  `Clean command will clean the output directory (_site)`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxClean()
 	},

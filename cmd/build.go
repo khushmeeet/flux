@@ -12,6 +12,7 @@ var buildCmd = &cobra.Command{
 	Short: "Build subcommand will look at the project files and generate formatted .html files in _site folder",
 	Long: `Build subcommand will gather css, markdown and html files and generate formatted .html files in _site folder, 
 ready to be deployed in a web service`,
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxBuild()
 	},

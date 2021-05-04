@@ -11,6 +11,7 @@ var serveCmd = &cobra.Command{
 	Use:   "serve",
 	Short: "Serve command will run http server on _site folder",
 	Long:  `Serve command will run http server on _site folder`,
+	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxServe()
 	},
