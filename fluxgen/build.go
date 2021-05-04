@@ -52,7 +52,7 @@ func loadResources(path ...string) Resources {
 		if _, err := os.Stat(i); err == nil {
 			err := filepath.WalkDir(i, func(path string, d fs.DirEntry, err error) error {
 				if !d.IsDir() {
-					resources[strings.TrimSuffix(d.Name(), filepath.Ext(d.Name()))] = path
+					resources[filepath.Base(d.Name())] = path
 				}
 				return nil
 			})

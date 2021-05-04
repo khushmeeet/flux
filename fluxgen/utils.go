@@ -30,6 +30,12 @@ func (p *Page) setHref(path string) {
 	}
 }
 
+func getResource(r *Resources) func(v string) string {
+	return func(v string) string {
+		return (*r)[v]
+	}
+}
+
 func (p *Page) applyTemplate() (string, error) {
 	tmpl, err := pongo2.FromFile(p.Template + ".html")
 	if err != nil {
@@ -37,13 +43,14 @@ func (p *Page) applyTemplate() (string, error) {
 	}
 
 	ctx := pongo2.Context{
-		"title":     p.Title,
-		"date":      p.Date,
-		"content":   p.Content,
-		"meta":      p.MetaData,
-		"posts":     *p.PostList,
-		"flux":      p.FluxConfig,
-		"resources": p.Resources,
+		"title":       p.Title,
+		"date":        p.Date,
+		"content":     p.Content,
+		"meta":        p.MetaData,
+		"posts":       p.PostList,
+		"flux":        p.FluxConfig,
+		"resources":   p.Resources,
+		"getResource": getResource(p.Resources),
 	}
 
 	out, err := tmpl.Execute(ctx)
