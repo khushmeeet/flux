@@ -41,7 +41,7 @@ func FluxInit(projectName string) {
 		log.Fatal("Unable to write data to Config File")
 	}
 
-	for _, folderName := range []string{TemplatesDir, CSSDir, AssetsDir, PagesDir, SiteDir} {
+	for _, folderName := range []string{TemplatesDir, CSSDir, AssetsDir, PostsDir, SiteDir} {
 		fmt.Println("Creating sub-folder: " + folderName)
 		if err := os.Mkdir(path.Join(currentDir, projectName, folderName), 0777); err != nil {
 			if mkdirErr, ok := err.(*os.PathError); ok {

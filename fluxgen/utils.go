@@ -24,9 +24,9 @@ func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
 		p.Href = "/"
 	} else if filepath.Ext(path) == ".html" {
-		p.Href = filepath.Join(strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
+		p.Href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
 	} else {
-		p.Href = strings.TrimSuffix(path, filepath.Base(path))
+		p.Href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
 	}
 }
 

@@ -41,7 +41,7 @@ func FluxBuild() {
 	pageList, postList := parsePages(&fluxConfig, &resources)
 	By(descendingOrderByDate).Sort(postList)
 	parseHTMLTemplates(pageList, postList)
-	processPageAssets(PagesDir)
+	processPageAssets(PostsDir)
 	processStaticFolders(CSSDir)
 	processStaticFolders(AssetsDir)
 }
@@ -85,8 +85,8 @@ func parseFluxConfig(path string) FluxConfig {
 func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 	var pageList Pages
 	var postList Pages
-	if _, err := os.Stat(PagesDir); err == nil {
-		err := filepath.WalkDir(PagesDir, func(path string, d fs.DirEntry, err error) error {
+	if _, err := os.Stat(PostsDir); err == nil {
+		err := filepath.WalkDir(PostsDir, func(path string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && filepath.Ext(path) == ".md" {
 				mdPage := parseMarkdown(path, config, resources)
 				pageList = append(pageList, mdPage)
@@ -95,7 +95,7 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 			return nil
 		})
 		if err != nil {
-			log.Fatalf("[Error Walking (%v)] - %v", PagesDir, err)
+			log.Fatalf("[Error Walking (%v)] - %v", PostsDir, err)
 		}
 
 		dirContent, err := ioutil.ReadDir(".")
