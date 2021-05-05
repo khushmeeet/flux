@@ -48,16 +48,21 @@ func FluxBuild() {
 
 func loadResources(path ...string) Resources {
 	resources := Resources{}
-	for _, i := range path {
-		if _, err := os.Stat(i); err == nil {
-			err := filepath.WalkDir(i, func(path string, d fs.DirEntry, err error) error {
+	for _, p := range path {
+		if _, err := os.Stat(p); err == nil {
+			err := filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
 				if !d.IsDir() {
-					resources[filepath.Base(d.Name())] = path
+					if filepath.Ext(d.Name()) == ".scss" {
+						fileNameNoExt := strings.TrimSuffix(path, ".scss")
+						resources[filepath.Base(d.Name())] = filepath.Join("/", fileNameNoExt+".css")
+					} else {
+						resources[filepath.Base(d.Name())] = filepath.Join("/", path)
+					}
 				}
 				return nil
 			})
 			if err != nil {
-				log.Fatalf("Error walking (%v) - %v", i, err)
+				log.Fatalf("Error walking (%v) - %v", p, err)
 			}
 		}
 	}
