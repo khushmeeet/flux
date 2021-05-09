@@ -6,18 +6,18 @@ import (
 )
 
 type Page struct {
-	Title        string
-	Date         time.Time
-	Template     string
-	Href         string
-	OldExtension string
-	NewExtension string
-	FileName     string
-	Content      template.HTML
-	MetaData     map[string]interface{}
-	PostList     *Pages
-	Resources    *Resources
-	FluxConfig   *FluxConfig
+	title        string
+	date         time.Time
+	template     string
+	href         string
+	oldExtention string
+	newExtension string
+	filename     string
+	content      template.HTML
+	meta         map[string]interface{}
+	postsList    *Pages
+	resources    *Resources
+	fluxConfig   *FluxConfig
 }
 
 type Pages []Page
