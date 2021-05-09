@@ -19,8 +19,8 @@ func FluxBuild() {
 	By(descendingOrderByDate).Sort(postList)
 	parseHTMLTemplates(pageList, postList)
 	processPageAssets(PostsDir)
-	processStaticFolders(CSSDir)
-	processStaticFolders(AssetsDir)
+	processStaticFolders(CSSDir, &fluxConfig)
+	processStaticFolders(AssetsDir, &fluxConfig)
 }
 
 func loadResources(path ...string) Resources {
@@ -93,20 +93,20 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 
 func parseHTMLTemplates(pages Pages, posts Pages) {
 	for _, p := range pages {
-		p.PostList = &posts
+		p.postsList = &posts
 		buffer, err := p.applyTemplate()
 		if err != nil {
-			log.Fatalf("[Error Applying Template to Page] - %v", err)
+			log.Fatalf("[Error Applying template to Page] - %v", err)
 		}
 
-		fileWritePath := createFileWritePath(p.FileName, p.Href)
+		fileWritePath := createFileWritePath(p.filename, p.href)
 		createFileWriteDir(fileWritePath)
 
 		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), []byte(buffer), 0744)
 		if err != nil {
-			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
+			log.Fatalf("[Error Writing File (%v)] - %v", p.href, err)
 		}
-		fmt.Printf("Writing File: %v\n", p.Href+p.OldExtension)
+		fmt.Printf("Writing File: %v\n", p.href+p.oldExtention)
 	}
 }
 
@@ -127,7 +127,7 @@ func processPageAssets(dir string) {
 	}
 }
 
-func processStaticFolders(filePath string) {
+func processStaticFolders(filePath string, fc *FluxConfig) {
 	if _, err := os.Stat(filePath); err == nil {
 		err = filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
@@ -152,7 +152,7 @@ func processStaticFolders(filePath string) {
 					}
 					defer dst.Close()
 
-					c := createSassCompiler(src, dst)
+					c := createSassCompiler(src, dst, fc)
 					c.compileSass()
 				} else {
 					err := copyFile(path, dstFilePath)

@@ -22,11 +22,11 @@ import (
 
 func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
-		p.Href = "/"
+		p.href = "/"
 	} else if filepath.Ext(path) == ".html" {
-		p.Href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
+		p.href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
 	} else {
-		p.Href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
+		p.href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
 	}
 }
 
@@ -37,20 +37,20 @@ func getResource(r *Resources) func(v string) string {
 }
 
 func (p *Page) applyTemplate() (string, error) {
-	tmpl, err := pongo2.FromFile(p.Template + ".html")
+	tmpl, err := pongo2.FromFile(p.template + ".html")
 	if err != nil {
 		panic(err)
 	}
 
 	ctx := pongo2.Context{
-		"title":       p.Title,
-		"date":        p.Date,
-		"content":     p.Content,
-		"meta":        p.MetaData,
-		"posts":       p.PostList,
-		"flux":        p.FluxConfig,
-		"resources":   p.Resources,
-		"getResource": getResource(p.Resources),
+		"title":       p.title,
+		"date":        p.date,
+		"content":     p.content,
+		"meta":        p.meta,
+		"posts":       p.postsList,
+		"flux":        p.fluxConfig,
+		"resources":   p.resources,
+		"getResource": getResource(p.resources),
 	}
 
 	out, err := tmpl.Execute(ctx)
@@ -139,16 +139,16 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 	}
 
 	page := Page{
-		Title:        frontMatter["title"].(string),
-		Date:         parsedDate,
-		Template:     filepath.Join(TemplatesDir, frontMatter["template"].(string)),
-		OldExtension: filepath.Ext(path),
-		NewExtension: ".html",
-		FileName:     filepath.Base(path),
-		Content:      template.HTML(buff.Bytes()),
-		MetaData:     make(map[string]interface{}),
-		FluxConfig:   config,
-		Resources:    r,
+		title:        frontMatter["title"].(string),
+		date:         parsedDate,
+		template:     filepath.Join(TemplatesDir, frontMatter["template"].(string)),
+		oldExtention: filepath.Ext(path),
+		newExtension: ".html",
+		filename:     filepath.Base(path),
+		content:      template.HTML(buff.Bytes()),
+		meta:         make(map[string]interface{}),
+		fluxConfig:   config,
+		resources:    r,
 	}
 	page.setHref(path)
 	return page
@@ -161,16 +161,16 @@ func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
 	}
 
 	page := Page{
-		Title:        "",
-		Date:         time.Time{},
-		Template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
-		OldExtension: filepath.Ext(path),
-		NewExtension: ".html",
-		FileName:     filepath.Base(path),
-		Content:      template.HTML(file),
-		MetaData:     make(map[string]interface{}),
-		FluxConfig:   config,
-		Resources:    resources,
+		title:        "",
+		date:         time.Time{},
+		template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
+		oldExtention: filepath.Ext(path),
+		newExtension: ".html",
+		filename:     filepath.Base(path),
+		content:      template.HTML(file),
+		meta:         make(map[string]interface{}),
+		fluxConfig:   config,
+		resources:    resources,
 	}
 	page.setHref(path)
 	return page

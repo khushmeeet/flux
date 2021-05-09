@@ -9,17 +9,22 @@ import (
 	"path"
 )
 
-type fluxConfig struct {
-	SiteTitle       string `json:"site_title"`
-	Email           string `json:"email"`
-	TwitterUsername string `json:"twitter_username"`
-	GithubUsername  string `json:"github_username"`
-}
-
 func FluxInit(projectName string) {
 	currentDir, err := os.Getwd()
 	if err != nil {
 		log.Fatal("Unable to retrieve current working directory")
+	}
+
+	fc := FluxConfig{
+		"site": FluxConfig{
+			"title":   projectName,
+			"email":   "hello@flux.com",
+			"twitter": "@" + projectName,
+			"github":  projectName,
+		},
+		"minify_css":  false,
+		"minify_html": false,
+		"rss_feed":    false,
 	}
 
 	fmt.Println("Creating root folder: " + projectName)
@@ -30,12 +35,7 @@ func FluxInit(projectName string) {
 	}
 
 	fmt.Println("Creating project config file: config.json")
-	fcJson, err := json.Marshal(fluxConfig{
-		SiteTitle:       projectName,
-		Email:           "hello@flux.com",
-		TwitterUsername: "@" + projectName,
-		GithubUsername:  projectName,
-	})
+	fcJson, err := json.Marshal(fc)
 	err = ioutil.WriteFile(path.Join(currentDir, projectName, ConfigFile), fcJson, 0644)
 	if err != nil {
 		log.Fatal("Unable to write data to Config File")
