@@ -21,6 +21,9 @@ func FluxBuild() {
 	processPageAssets(PostsDir)
 	processStaticFolders(CSSDir, &fluxConfig)
 	processStaticFolders(AssetsDir, &fluxConfig)
+	//if fluxConfig["minify_html"] == true {
+	//	minifyHtml()
+	//}
 }
 
 func loadResources(path ...string) Resources {
@@ -171,3 +174,31 @@ func processStaticFolders(filePath string, fc *FluxConfig) {
 		fmt.Printf("\"%v\" does not exists... Skipping", filePath)
 	}
 }
+
+//func minifyHtml() {
+//	m := minify.New()
+//	m.AddFunc("text/html", html.Minify)
+//	err := filepath.WalkDir(SiteDir, func(path string, d fs.DirEntry, err error) error {
+//		if !d.IsDir() && filepath.Ext(path) == ".html" {
+//			fr, err := os.OpenFile(path, os.O_RDWR, 0755)
+//			if err != nil {
+//				return err
+//			}
+//			defer fr.Close()
+//
+//			fw, err := os.OpenFile(path, os.O_WRONLY, 0755)
+//			if err != nil {
+//				return err
+//			}
+//			defer fw.Close()
+//
+//			if err := m.Minify("text/html", fw, fr); err != nil {
+//				return err
+//			}
+//		}
+//		return nil
+//	})
+//	if err != nil {
+//		log.Fatalf("error minifying html! - %v", err)
+//	}
+//}

@@ -17,6 +17,8 @@ require (
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
 	github.com/stretchr/testify v1.5.1 // indirect
+	github.com/tdewolff/minify/v2 v2.9.16 // indirect
+	github.com/tdewolff/parse/v2 v2.5.16 // indirect
 	github.com/wellington/go-libsass v0.9.2
 	github.com/yuin/goldmark v1.3.5
 	github.com/yuin/goldmark-highlighting v0.0.0-20210428103930-3a9678dbb86c
