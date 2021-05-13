@@ -6,12 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// buildCmd represents the build command
 var buildCmd = &cobra.Command{
 	Use:   "build",
-	Short: "Build subcommand will look at the project files and generate formatted .html files in _site folder",
-	Long: `Build subcommand will gather css, markdown and html files and generate formatted .html files in _site folder, 
-ready to be deployed in a web service`,
+	Short: "Builds your website",
+	Long: `Build subcommand will gather Markdown, HTML/CSS/JS and Assets files and 
+generate complete website in _site/ folder, ready to be deployed to a cloud provider.`,
 	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxBuild()

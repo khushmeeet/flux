@@ -6,12 +6,12 @@ import (
 	"github.com/spf13/cobra"
 )
 
-// cleanCmd represents the clean command
 var cleanCmd = &cobra.Command{
 	Use:   "clean",
-	Short: "Clean command will clean the output directory (_site)",
-	Long:  `Clean command will clean the output directory (_site)`,
-	Args:  cobra.NoArgs,
+	Short: "Clean command will empty the output directory _site/",
+	Long: `Clean command will delete all the contents of the output directory.
+To regenerate the content, use ` + "`build` command",
+	Args: cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
 		fluxgen.FluxClean()
 	},
