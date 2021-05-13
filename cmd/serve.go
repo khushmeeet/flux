@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/khushmeeet/flux/fluxgen"
+	"log"
 
 	"github.com/spf13/cobra"
 )
@@ -13,7 +14,11 @@ var serveCmd = &cobra.Command{
 	Long:  `Serve command will run http server on _site folder`,
 	Args:  cobra.NoArgs,
 	Run: func(cmd *cobra.Command, args []string) {
-		fluxgen.FluxServe()
+		port, err := cmd.Flags().GetString("port")
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+		fluxgen.FluxServe(port)
 	},
 }
 
@@ -28,5 +33,5 @@ func init() {
 
 	// Cobra supports local flags which will only run when this command
 	// is called directly, e.g.:
-	// serveCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
+	serveCmd.Flags().StringP("port", "p", "5050", "Port on which go http server is running")
 }

@@ -30,5 +30,5 @@ func (p pageSort) Less(i, j int) bool {
 }
 
 func descendingOrderByDate(p1, p2 *Page) bool {
-	return p1.date.After(p2.date)
+	return p1.Date.After(p2.Date)
 }

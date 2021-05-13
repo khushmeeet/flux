@@ -2,20 +2,21 @@ package fluxgen
 
 import (
 	"html/template"
+	"net/http"
 	"time"
 )
 
 type Page struct {
-	title        string
-	date         time.Time
+	Title        string
+	Date         time.Time
 	template     string
-	href         string
+	Href         string
 	oldExtention string
 	newExtension string
 	filename     string
-	content      template.HTML
-	meta         map[string]interface{}
-	postsList    *Pages
+	Content      template.HTML
+	Meta         map[string]interface{}
+	PostsList    *Pages
 	resources    *Resources
 	fluxConfig   *FluxConfig
 }
@@ -25,3 +26,10 @@ type Pages []Page
 type FluxConfig map[string]interface{}
 
 type Resources map[string]string
+
+type responseObserver struct {
+	http.ResponseWriter
+	status      int
+	written     int64
+	wroteHeader bool
+}

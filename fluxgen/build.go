@@ -96,20 +96,20 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 
 func parseHTMLTemplates(pages Pages, posts Pages) {
 	for _, p := range pages {
-		p.postsList = &posts
+		p.PostsList = &posts
 		buffer, err := p.applyTemplate()
 		if err != nil {
 			log.Fatalf("[Error Applying template to Page] - %v", err)
 		}
 
-		fileWritePath := createFileWritePath(p.filename, p.href)
+		fileWritePath := createFileWritePath(p.filename, p.Href)
 		createFileWriteDir(fileWritePath)
 
 		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), []byte(buffer), 0744)
 		if err != nil {
-			log.Fatalf("[Error Writing File (%v)] - %v", p.href, err)
+			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
 		}
-		fmt.Printf("Writing File: %v\n", p.href+p.oldExtention)
+		fmt.Printf("Writing File: %v\n", p.Href+p.oldExtention)
 	}
 }
 

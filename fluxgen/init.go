@@ -17,7 +17,7 @@ func FluxInit(projectName string) {
 
 	fc := FluxConfig{
 		"site": FluxConfig{
-			"title":   projectName,
+			"Title":   projectName,
 			"email":   "hello@flux.com",
 			"twitter": "@" + projectName,
 			"github":  projectName,

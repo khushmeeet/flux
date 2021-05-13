@@ -22,11 +22,11 @@ import (
 
 func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
-		p.href = "/"
+		p.Href = "/"
 	} else if filepath.Ext(path) == ".html" {
-		p.href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
+		p.Href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
 	} else {
-		p.href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
+		p.Href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
 	}
 }
 
@@ -43,14 +43,13 @@ func (p *Page) applyTemplate() (string, error) {
 	}
 
 	ctx := pongo2.Context{
-		"title":       p.title,
-		"date":        p.date,
-		"content":     p.content,
-		"meta":        p.meta,
-		"posts":       p.postsList,
-		"flux":        p.fluxConfig,
-		"resources":   p.resources,
-		"getResource": getResource(p.resources),
+		"Title":   p.Title,
+		"Date":    p.Date,
+		"Content": p.Content,
+		"Meta":    p.Meta,
+		"Posts":   p.PostsList,
+		"Flux":    p.fluxConfig,
+		"GetPath": getResource(p.resources),
 	}
 
 	out, err := tmpl.Execute(ctx)
@@ -139,14 +138,14 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 	}
 
 	page := Page{
-		title:        frontMatter["title"].(string),
-		date:         parsedDate,
+		Title:        frontMatter["title"].(string),
+		Date:         parsedDate,
 		template:     filepath.Join(TemplatesDir, frontMatter["template"].(string)),
 		oldExtention: filepath.Ext(path),
 		newExtension: ".html",
 		filename:     filepath.Base(path),
-		content:      template.HTML(buff.Bytes()),
-		meta:         make(map[string]interface{}),
+		Content:      template.HTML(buff.Bytes()),
+		Meta:         make(map[string]interface{}),
 		fluxConfig:   config,
 		resources:    r,
 	}
@@ -161,14 +160,14 @@ func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
 	}
 
 	page := Page{
-		title:        "",
-		date:         time.Time{},
+		Title:        "",
+		Date:         time.Time{},
 		template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
 		oldExtention: filepath.Ext(path),
 		newExtension: ".html",
 		filename:     filepath.Base(path),
-		content:      template.HTML(file),
-		meta:         make(map[string]interface{}),
+		Content:      template.HTML(file),
+		Meta:         make(map[string]interface{}),
 		fluxConfig:   config,
 		resources:    resources,
 	}

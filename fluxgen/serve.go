@@ -10,11 +10,11 @@ import (
 	"time"
 )
 
-type responseObserver struct {
-	http.ResponseWriter
-	status      int
-	written     int64
-	wroteHeader bool
+func FluxServe(port string) {
+	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
+	if err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux)); err != nil {
+		log.Fatal("Unable to start http static server!")
+	}
 }
 
 func Logger(out io.Writer, h http.Handler) http.Handler {
@@ -32,11 +32,4 @@ func Logger(out io.Writer, h http.Handler) http.Handler {
 			fmt.Sprintf("%s %s %s", r.Method, r.URL, r.Proto),
 		)
 	})
-}
-
-func FluxServe() {
-	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
-	if err := http.ListenAndServe(":5050", Logger(os.Stderr, http.DefaultServeMux)); err != nil {
-		log.Fatal("Unable to start http static server!")
-	}
 }
