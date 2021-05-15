@@ -23,22 +23,6 @@ import (
 
 var green = termenv.ColorProfile().Color("#29bc89")
 
-func (p *Page) setHref(path string) {
-	if filepath.Base(path) == "index.html" {
-		p.Href = "/"
-	} else if filepath.Ext(path) == ".html" {
-		p.Href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
-	} else {
-		p.Href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
-	}
-}
-
-func getResource(r *Resources) func(v string) string {
-	return func(v string) string {
-		return (*r)[v]
-	}
-}
-
 func (p *Page) applyTemplate() (string, error) {
 	tmpl, err := pongo2.FromFile(p.template + ".html")
 	if err != nil {
@@ -60,47 +44,6 @@ func (p *Page) applyTemplate() (string, error) {
 		return "", err
 	}
 	return hpp.PrPrint(out), nil
-}
-
-func copyFile(src, dst string) error {
-	sourceFileStat, err := os.Stat(src)
-	if err != nil {
-		return err
-	}
-
-	if !sourceFileStat.Mode().IsRegular() {
-		return fmt.Errorf("%s is not a regular file", src)
-	}
-
-	source, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer source.Close()
-
-	destination, err := os.Create(dst)
-	if err != nil {
-		return err
-	}
-	defer destination.Close()
-	_, err = io.Copy(destination, source)
-	return err
-}
-
-func createFileWritePath(fileName string, filePath string) string {
-	fileWritePath := ""
-	if fileName == "index.html" {
-		fileWritePath = SiteDir
-	} else {
-		fileWritePath = filepath.Join(SiteDir, filePath)
-	}
-	return fileWritePath
-}
-
-func createFileWriteDir(filePath string) {
-	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		_ = os.MkdirAll(filePath, 0744)
-	}
 }
 
 func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
@@ -174,6 +117,63 @@ func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
 	}
 	page.setHref(path)
 	return page
+}
+
+func copyFile(src, dst string) error {
+	sourceFileStat, err := os.Stat(src)
+	if err != nil {
+		return err
+	}
+
+	if !sourceFileStat.Mode().IsRegular() {
+		return fmt.Errorf("%s is not a regular file", src)
+	}
+
+	source, err := os.Open(src)
+	if err != nil {
+		return err
+	}
+	defer source.Close()
+
+	destination, err := os.Create(dst)
+	if err != nil {
+		return err
+	}
+	defer destination.Close()
+	_, err = io.Copy(destination, source)
+	return err
+}
+
+func (p *Page) setHref(path string) {
+	if filepath.Base(path) == "index.html" {
+		p.Href = "/"
+	} else if filepath.Ext(path) == ".html" {
+		p.Href = filepath.Join("/", strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)), "/")
+	} else {
+		p.Href = filepath.Join("/", strings.TrimSuffix(path, filepath.Base(path)))
+	}
+}
+
+func createFileWritePath(fileName string, filePath string) string {
+	fileWritePath := ""
+	if fileName == "index.html" {
+		fileWritePath = SiteDir
+	} else {
+		fileWritePath = filepath.Join(SiteDir, filePath)
+	}
+	return fileWritePath
+}
+
+func createFileWriteDir(filePath string) {
+	if _, err := os.Stat(filePath); os.IsNotExist(err) {
+		_ = os.MkdirAll(filePath, 0744)
+	}
+}
+
+func getResource(r *Resources) func(v string) string {
+	return func(v string) string {
+		return (*r)[v]
+	}
 }
 
 func printMsg(msg, status string) {
