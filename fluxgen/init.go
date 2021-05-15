@@ -17,9 +17,9 @@ func FluxInit(projectName string) {
 
 	fc := FluxConfig{
 		"site": FluxConfig{
-			"Title":   projectName,
+			"title":   projectName,
 			"email":   "hello@flux.com",
-			"twitter": "@" + projectName,
+			"twitter": fmt.Sprintf("@%v", projectName),
 			"github":  projectName,
 		},
 		"minify_css":  false,

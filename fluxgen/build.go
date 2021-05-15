@@ -21,6 +21,7 @@ func FluxBuild() {
 	processPageAssets(PostsDir)
 	processStaticFolders(CSSDir, &fluxConfig)
 	processStaticFolders(AssetsDir, &fluxConfig)
+	printMsg("Done", "party")
 	//if fluxConfig["minify_html"] == true {
 	//	minifyHtml()
 	//}
@@ -59,6 +60,7 @@ func parseFluxConfig(path string) FluxConfig {
 	if err != nil {
 		log.Fatalf("[Error Unmarshalling (%v)] - %v", path, err)
 	}
+	printMsg("Parsed config file", "tick")
 	return fluxConfig
 }
 
@@ -89,6 +91,7 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
 				pageList = append(pageList, htmlPage)
 			}
 		}
+		printMsg("Parsed pages", "tick")
 	}
 
 	return pageList, postList
@@ -109,7 +112,7 @@ func parseHTMLTemplates(pages Pages, posts Pages) {
 		if err != nil {
 			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
 		}
-		fmt.Printf("Writing File: %v\n", p.Href+p.oldExtention)
+		//fmt.Printf("Writing File: %v\n", p.Href+p.oldExtention)
 	}
 }
 
@@ -127,6 +130,7 @@ func processPageAssets(dir string) {
 		if err != nil {
 			log.Fatalf("error copying file [%v]", err)
 		}
+		printMsg("Processed page assets", "tick")
 	}
 }
 
@@ -138,7 +142,6 @@ func processStaticFolders(filePath string, fc *FluxConfig) {
 				if err != nil {
 					return err
 				}
-				fmt.Printf("Creating Folder: %v\n", path)
 			} else {
 				dstFilePath := filepath.Join(SiteDir, path)
 
@@ -162,7 +165,6 @@ func processStaticFolders(filePath string, fc *FluxConfig) {
 					if err != nil {
 						return err
 					}
-					fmt.Printf("Copying File: %v\n", path)
 				}
 			}
 			return nil
@@ -170,8 +172,7 @@ func processStaticFolders(filePath string, fc *FluxConfig) {
 		if err != nil {
 			log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
 		}
-	} else {
-		fmt.Printf("\"%v\" does not exists... Skipping", filePath)
+		printMsg(fmt.Sprintf("Processed %s/", filePath), "tick")
 	}
 }
 

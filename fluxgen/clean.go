@@ -1,7 +1,6 @@
 package fluxgen
 
 import (
-	"fmt"
 	"log"
 	"os"
 )
@@ -17,6 +16,6 @@ func FluxClean() {
 		log.Fatal("Unable to create _site folder")
 	}
 
-	fmt.Printf("Flux %v cleaned!\n", SiteDir)
+	printMsg("_site/ cleaned", "tick")
 
 }

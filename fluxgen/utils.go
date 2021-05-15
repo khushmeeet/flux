@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"github.com/Joker/hpp"
 	"github.com/flosch/pongo2/v4"
+	"github.com/muesli/termenv"
 	"github.com/yuin/goldmark"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	meta "github.com/yuin/goldmark-meta"
@@ -19,6 +20,8 @@ import (
 	"strings"
 	"time"
 )
+
+var green = termenv.ColorProfile().Color("#29bc89")
 
 func (p *Page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
@@ -97,8 +100,6 @@ func createFileWritePath(fileName string, filePath string) string {
 func createFileWriteDir(filePath string) {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
 		_ = os.MkdirAll(filePath, 0744)
-	} else {
-		fmt.Println("Directory already exists")
 	}
 }
 
@@ -173,4 +174,14 @@ func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
 	}
 	page.setHref(path)
 	return page
+}
+
+func printMsg(msg, status string) {
+	var info string
+	if status == "tick" {
+		info = termenv.String("✔").Foreground(green).String()
+	} else if status == "party" {
+		info = termenv.String("️🎉").String()
+	}
+	fmt.Printf("%s %s\n", msg, info)
 }

@@ -10,6 +10,7 @@ require (
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
+	github.com/muesli/termenv v0.8.1 // indirect
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
@@ -22,6 +23,6 @@ require (
 	github.com/yuin/goldmark-highlighting v0.0.0-20210428103930-3a9678dbb86c
 	github.com/yuin/goldmark-meta v1.0.0
 	golang.org/x/net v0.0.0-20210510120150-4163338589ed // indirect
-	golang.org/x/sys v0.0.0-20210511113859-b0526f3d8744 // indirect
+	golang.org/x/sys v0.0.0-20210514084401-e8d321eab015 // indirect
 	gopkg.in/ini.v1 v1.62.0 // indirect
 )
