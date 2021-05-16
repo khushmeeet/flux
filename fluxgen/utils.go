@@ -14,7 +14,6 @@ import (
 	"html/template"
 	"io"
 	"io/ioutil"
-	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -26,7 +25,7 @@ var green = termenv.ColorProfile().Color("#29bc89")
 func (p *Page) applyTemplate() (string, error) {
 	tmpl, err := pongo2.FromFile(p.template + ".html")
 	if err != nil {
-		panic(err)
+		return "", err
 	}
 
 	ctx := pongo2.Context{
@@ -46,7 +45,7 @@ func (p *Page) applyTemplate() (string, error) {
 	return hpp.PrPrint(out), nil
 }
 
-func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
+func parseMarkdown(path string, config *FluxConfig, r *Resources) (Page, error) {
 	var buff bytes.Buffer
 	context := parser.NewContext()
 	md := goldmark.New(
@@ -60,18 +59,18 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("[Error Reading (%v)] - %v", path, err)
+		return Page{}, nil
 	}
 
 	err = md.Convert(file, &buff, parser.WithContext(context))
 	if err != nil {
-		log.Fatalf("[Error Parsing Markdown File (%v)] - %v", path, err)
+		return Page{}, err
 	}
 	frontMatter := meta.Get(context)
 
 	parsedDate, err := time.Parse("2006-01-02", frontMatter["date"].(string))
 	if err != nil {
-		log.Fatalf("[Error Parsing Time (%v)] - %v", frontMatter["date"].(string), err)
+		return Page{}, err
 	}
 
 	metaData := make(map[string]interface{})
@@ -94,13 +93,13 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) Page {
 		resources:    r,
 	}
 	page.setHref(path)
-	return page
+	return page, nil
 }
 
-func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
+func parseHTML(path string, config *FluxConfig, resources *Resources) (Page, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("[Error Reading (%v)] - %v", path, err)
+		return Page{}, err
 	}
 
 	page := Page{
@@ -116,7 +115,7 @@ func parseHTML(path string, config *FluxConfig, resources *Resources) Page {
 		resources:    resources,
 	}
 	page.setHref(path)
-	return page
+	return page, nil
 }
 
 func copyFile(src, dst string) error {
@@ -164,10 +163,14 @@ func createFileWritePath(fileName string, filePath string) string {
 	return fileWritePath
 }
 
-func createFileWriteDir(filePath string) {
+func createFileWriteDir(filePath string) error {
 	if _, err := os.Stat(filePath); os.IsNotExist(err) {
-		_ = os.MkdirAll(filePath, 0744)
+		err = os.MkdirAll(filePath, 0744)
+		if err != nil {
+			return err
+		}
 	}
+	return nil
 }
 
 func getResource(r *Resources) func(v string) string {

@@ -13,21 +13,51 @@ import (
 
 func FluxBuild() {
 	FluxClean()
-	fluxConfig := parseFluxConfig(ConfigFile)
-	resources := loadResources(CSSDir, AssetsDir)
-	pageList, postList := parsePages(&fluxConfig, &resources)
+
+	fluxConfig, err := parseFluxConfig(ConfigFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	resources, err := loadResources(CSSDir, AssetsDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	pageList, postList, err := parsePages(&fluxConfig, &resources)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	By(descendingOrderByDate).Sort(postList)
-	parseHTMLTemplates(pageList, postList)
-	processPageAssets(PostsDir)
-	processStaticFolders(CSSDir, &fluxConfig)
-	processStaticFolders(AssetsDir, &fluxConfig)
+
+	err = parseHTMLTemplates(pageList, postList)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = processPageAssets(PostsDir)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = processStaticFolders(CSSDir, &fluxConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	err = processStaticFolders(AssetsDir, &fluxConfig)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	printMsg("Done", "party")
 	//if fluxConfig["minify_html"] == true {
 	//	minifyHtml()
 	//}
 }
 
-func loadResources(path ...string) Resources {
+func loadResources(path ...string) (Resources, error) {
 	resources := Resources{}
 	for _, p := range path {
 		if _, err := os.Stat(p); err == nil {
@@ -43,80 +73,83 @@ func loadResources(path ...string) Resources {
 				return nil
 			})
 			if err != nil {
-				log.Fatalf("Error walking (%v) - %v", p, err)
+				return Resources{}, err
 			}
 		}
 	}
-	return resources
+	return resources, nil
 }
 
-func parseFluxConfig(path string) FluxConfig {
+func parseFluxConfig(path string) (FluxConfig, error) {
 	fluxConfig := make(FluxConfig)
 	configFile, err := ioutil.ReadFile(path)
 	if err != nil {
-		log.Fatalf("[Error Reading (%v)] - %v", path, err)
+		return FluxConfig{}, err
 	}
 	err = json.Unmarshal(configFile, &fluxConfig)
 	if err != nil {
-		log.Fatalf("[Error Unmarshalling (%v)] - %v", path, err)
+		return FluxConfig{}, err
 	}
-	printMsg("Parsed config file", "tick")
-	return fluxConfig
+	printMsg("Parsed Config File", "tick")
+	return fluxConfig, nil
 }
 
-func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages) {
-	var pageList Pages
+func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages, error) {
+	var allPages Pages
 	var postList Pages
 	if _, err := os.Stat(PostsDir); err == nil {
 		err := filepath.WalkDir(PostsDir, func(path string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && filepath.Ext(path) == ".md" {
-				mdPage := parseMarkdown(path, config, resources)
-				pageList = append(pageList, mdPage)
+				mdPage, _ := parseMarkdown(path, config, resources)
+				allPages = append(allPages, mdPage)
 				postList = append(postList, mdPage)
 			}
 			return nil
 		})
 		if err != nil {
-			log.Fatalf("[Error Walking (%v)] - %v", PostsDir, err)
+			return Pages{}, Pages{}, err
 		}
 
 		dirContent, err := ioutil.ReadDir(".")
 		if err != nil {
-			log.Fatalf("[Error Reading (%v)] - %v", ".", err)
+			return Pages{}, Pages{}, err
 		}
 
 		for _, f := range dirContent {
 			if !f.IsDir() && filepath.Ext(f.Name()) == ".html" {
-				htmlPage := parseHTML(f.Name(), config, resources)
-				pageList = append(pageList, htmlPage)
+				htmlPage, _ := parseHTML(f.Name(), config, resources)
+				allPages = append(allPages, htmlPage)
 			}
 		}
-		printMsg("Parsed pages", "tick")
+		printMsg("Parsed Pages", "tick")
 	}
 
-	return pageList, postList
+	return allPages, postList, nil
 }
 
-func parseHTMLTemplates(pages Pages, posts Pages) {
-	for _, p := range pages {
+func parseHTMLTemplates(allPages, posts Pages) error {
+	for _, p := range allPages {
 		p.PostsList = &posts
 		buffer, err := p.applyTemplate()
 		if err != nil {
-			log.Fatalf("[Error Applying template to Page] - %v", err)
+			return err
 		}
 
 		fileWritePath := createFileWritePath(p.filename, p.Href)
-		createFileWriteDir(fileWritePath)
+		err = createFileWriteDir(fileWritePath)
+		if err != nil {
+			return err
+		}
 
 		err = ioutil.WriteFile(filepath.Join(fileWritePath, "index.html"), []byte(buffer), 0744)
 		if err != nil {
-			log.Fatalf("[Error Writing File (%v)] - %v", p.Href, err)
+			return err
 		}
-		//fmt.Printf("Writing File: %v\n", p.Href+p.oldExtention)
 	}
+	return nil
 }
 
-func processPageAssets(dir string) {
+func processPageAssets(dir string) error {
 	if _, err := os.Stat(dir); err == nil {
 		err = filepath.WalkDir(dir, func(path string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && filepath.Ext(path) != ".md" {
@@ -128,13 +161,14 @@ func processPageAssets(dir string) {
 			return nil
 		})
 		if err != nil {
-			log.Fatalf("error copying file [%v]", err)
+			return err
 		}
-		printMsg("Processed page assets", "tick")
+		printMsg("Processed Page Assets", "tick")
 	}
+	return nil
 }
 
-func processStaticFolders(filePath string, fc *FluxConfig) {
+func processStaticFolders(filePath string, fc *FluxConfig) error {
 	if _, err := os.Stat(filePath); err == nil {
 		err = filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {
@@ -170,10 +204,11 @@ func processStaticFolders(filePath string, fc *FluxConfig) {
 			return nil
 		})
 		if err != nil {
-			log.Fatalf("[Error Walking (%v)] - %v", filePath, err)
+			return err
 		}
 		printMsg(fmt.Sprintf("Processed %s/", filePath), "tick")
 	}
+	return nil
 }
 
 //func minifyHtml() {
