@@ -9,6 +9,12 @@ import (
 	"path"
 )
 
+var errLogger *log.Logger
+
+func init() {
+	errLogger = log.New(os.Stderr, "ERROR: ", 0)
+}
+
 func FluxInit(projectName string) {
 	currentDir, err := os.Getwd()
 	if err != nil {

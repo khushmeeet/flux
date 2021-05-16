@@ -16,39 +16,39 @@ func FluxBuild() {
 
 	fluxConfig, err := parseFluxConfig(ConfigFile)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("FluxConfig parsing failed\n\t[%v]", err)
 	}
 
 	resources, err := loadResources(CSSDir, AssetsDir)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("Resource loading Failed\n\t[%v]", err)
 	}
 
 	pageList, postList, err := parsePages(&fluxConfig, &resources)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("Pages parsing failed\n\t[%v]", err)
 	}
 
 	By(descendingOrderByDate).Sort(postList)
 
 	err = parseHTMLTemplates(pageList, postList)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("HTML parsing failed\n\t[%v]", err)
 	}
 
 	err = processPageAssets(PostsDir)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("Processing Page Assets failed\n\t[%v]", err)
 	}
 
 	err = processStaticFolders(CSSDir, &fluxConfig)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("Processing CSS Files failed\n\t[%v]", err)
 	}
 
 	err = processStaticFolders(AssetsDir, &fluxConfig)
 	if err != nil {
-		log.Fatal(err)
+		errLogger.Fatalf("Processing Static Files failed\n\t[%v]", err)
 	}
 
 	printMsg("Done", "party")
