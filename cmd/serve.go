@@ -17,11 +17,18 @@ var serveCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("%v", err)
 		}
-		fluxgen.FluxServe(port)
+
+		watch, err := cmd.Flags().GetBool("watch")
+		if err != nil {
+			log.Fatalf("%v", err)
+		}
+
+		fluxgen.WatchAndServe(port, watch)
 	},
 }
 
 func init() {
 	rootCmd.AddCommand(serveCmd)
 	serveCmd.Flags().StringP("port", "p", "5050", "port on which go http server is running")
+	serveCmd.Flags().BoolP("watch", "w", false, "detect file changes and restart the server")
 }

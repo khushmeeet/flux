@@ -2,17 +2,65 @@ package fluxgen
 
 import (
 	"fmt"
+	"github.com/fsnotify/fsnotify"
 	"io"
+	"io/fs"
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
 	"strings"
 	"time"
 )
 
-func FluxServe(port string) {
+func WatchAndServe(port string, watch bool) {
+	serve(port, "Running http server at")
+
+	if watch {
+		done := make(chan bool)
+		w, err := fsnotify.NewWatcher()
+		if err != nil {
+			panic(err)
+		}
+		defer w.Close()
+
+		err = filepath.WalkDir(SiteDir, func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() {
+				return w.Add(path)
+			}
+			return nil
+		})
+		if err != nil {
+			return
+		}
+
+		go func() {
+			for {
+				select {
+				case e, ok := <-w.Events:
+					if !ok {
+						return
+					}
+					if e.Op == fsnotify.Write {
+						fmt.Println("File changed: ", strings.TrimSuffix(e.Name, "~"))
+						FluxBuild()
+						serve(port, "Restarting http server at")
+					}
+				case err, ok := <-w.Errors:
+					if !ok {
+						return
+					}
+					fmt.Println("err:", err)
+				}
+			}
+		}()
+		<-done
+	}
+}
+
+func serve(port, message string) {
 	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
-	fmt.Printf("Running http server at :%s...\n", port)
+	fmt.Printf("%s :%s...\n", message, port)
 	err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux))
 	if err != nil {
 		log.Fatal("Unable to start http server!")
