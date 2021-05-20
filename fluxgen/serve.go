@@ -1,6 +1,7 @@
 package fluxgen
 
 import (
+	"context"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
 	"io"
@@ -14,7 +15,14 @@ import (
 )
 
 func WatchAndServe(port string, watch bool) {
-	serve(port, "Running http server at")
+	server := &http.Server{Addr: ":" + port, Handler: http.FileServer(http.Dir(SiteDir))}
+
+	go func() {
+		err := server.ListenAndServe()
+		if err != nil {
+			log.Fatalf("error starting http server %v", err)
+		}
+	}()
 
 	if watch {
 		done := make(chan bool)
@@ -24,8 +32,8 @@ func WatchAndServe(port string, watch bool) {
 		}
 		defer w.Close()
 
-		err = filepath.WalkDir(SiteDir, func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() {
+		err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
+			if d.IsDir() && d.Name() != SiteDir {
 				return w.Add(path)
 			}
 			return nil
@@ -42,9 +50,12 @@ func WatchAndServe(port string, watch bool) {
 						return
 					}
 					if e.Op == fsnotify.Write {
+						err := server.Shutdown(context.Background())
+						if err != nil {
+							log.Fatalf("error shutting down server")
+						}
 						fmt.Println("File changed: ", strings.TrimSuffix(e.Name, "~"))
-						FluxBuild()
-						serve(port, "Restarting http server at")
+						//FluxBuild()
 					}
 				case err, ok := <-w.Errors:
 					if !ok {
@@ -55,6 +66,8 @@ func WatchAndServe(port string, watch bool) {
 			}
 		}()
 		<-done
+	} else {
+		serve(port, "Running http server at")
 	}
 }
 
