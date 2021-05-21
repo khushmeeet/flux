@@ -1,9 +1,9 @@
 package fluxgen
 
 import (
-	"context"
 	"fmt"
 	"github.com/fsnotify/fsnotify"
+	"github.com/muesli/termenv"
 	"io"
 	"io/fs"
 	"log"
@@ -14,16 +14,9 @@ import (
 	"time"
 )
 
+var orange = termenv.ColorProfile().Color("#f9b208")
+
 func WatchAndServe(port string, watch bool) {
-	server := &http.Server{Addr: ":" + port, Handler: http.FileServer(http.Dir(SiteDir))}
-
-	go func() {
-		err := server.ListenAndServe()
-		if err != nil {
-			log.Fatalf("error starting http server %v", err)
-		}
-	}()
-
 	if watch {
 		done := make(chan bool)
 		w, err := fsnotify.NewWatcher()
@@ -42,6 +35,8 @@ func WatchAndServe(port string, watch bool) {
 			return
 		}
 
+		serve("HTTP Server running at", port)
+
 		go func() {
 			for {
 				select {
@@ -50,12 +45,10 @@ func WatchAndServe(port string, watch bool) {
 						return
 					}
 					if e.Op == fsnotify.Write {
-						err := server.Shutdown(context.Background())
-						if err != nil {
-							log.Fatalf("error shutting down server")
-						}
-						fmt.Println("File changed: ", strings.TrimSuffix(e.Name, "~"))
-						//FluxBuild()
+						changedFile := termenv.String("File changed:" + strings.TrimSuffix(e.Name, "~")).Foreground(orange).String()
+						fmt.Println(changedFile)
+						FluxBuild()
+						fmt.Printf("HTTP Server running at :%s\n", port)
 					}
 				case err, ok := <-w.Errors:
 					if !ok {
@@ -71,13 +64,15 @@ func WatchAndServe(port string, watch bool) {
 	}
 }
 
-func serve(port, message string) {
+func serve(message, port string) {
 	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
 	fmt.Printf("%s :%s...\n", message, port)
-	err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux))
-	if err != nil {
-		log.Fatal("Unable to start http server!")
-	}
+	go func() {
+		err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux))
+		if err != nil {
+			log.Fatalf("Unable to start http server %v", err)
+		}
+	}()
 }
 
 func Logger(out io.Writer, h http.Handler) http.Handler {
