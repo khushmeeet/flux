@@ -2,14 +2,14 @@ package fluxgen
 
 import "sort"
 
-type By func(p1, p2 *Page) bool
+type By func(p1, p2 *page) bool
 
 type pageSort struct {
-	pages Pages
+	pages pages
 	by    By
 }
 
-func (by By) Sort(pages Pages) {
+func (by By) Sort(pages pages) {
 	ps := &pageSort{
 		pages: pages,
 		by:    by,
@@ -29,6 +29,6 @@ func (p pageSort) Less(i, j int) bool {
 	return p.by(&p.pages[i], &p.pages[j])
 }
 
-func descendingOrderByDate(p1, p2 *Page) bool {
+func descendingOrderByDate(p1, p2 *page) bool {
 	return p1.Date.After(p2.Date)
 }

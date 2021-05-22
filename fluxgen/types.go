@@ -6,26 +6,24 @@ import (
 	"time"
 )
 
-type Page struct {
-	Title        string
-	Date         time.Time
-	template     string
-	Href         string
-	oldExtention string
-	newExtension string
-	filename     string
-	Content      template.HTML
-	Meta         map[string]interface{}
-	PostsList    *Pages
-	resources    *Resources
-	fluxConfig   *FluxConfig
+type page struct {
+	Title      string
+	Date       time.Time
+	template   string
+	Href       string
+	filename   string
+	Content    template.HTML
+	Meta       map[string]interface{}
+	PostsList  *pages
+	resources  *resources
+	fluxConfig *fluxConfig
 }
 
-type Pages []Page
+type pages []page
 
-type FluxConfig map[string]interface{}
+type fluxConfig map[string]interface{}
 
-type Resources map[string]string
+type resources map[string]string
 
 type responseObserver struct {
 	http.ResponseWriter

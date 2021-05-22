@@ -21,16 +21,16 @@ func FluxInit(projectName string) {
 		log.Fatal("Unable to retrieve current working directory")
 	}
 
-	fc := FluxConfig{
-		"site": FluxConfig{
+	fc := fluxConfig{
+		"site": fluxConfig{
 			"title":   projectName,
 			"email":   "hello@flux.com",
 			"twitter": fmt.Sprintf("@%v", projectName),
 			"github":  projectName,
 		},
-		"minify_css":  false,
-		"minify_html": false,
-		"rss_feed":    false,
+		"minify_css": false,
+		//"minify_html": false,
+		"rss_feed": false,
 	}
 
 	fmt.Println("Creating root folder: " + projectName)

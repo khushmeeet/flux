@@ -45,6 +45,7 @@ func WatchAndServe(port string, watch bool) {
 						return
 					}
 					if e.Op == fsnotify.Write {
+						fmt.Println("\n")
 						changedFile := termenv.String("File changed:" + strings.TrimSuffix(e.Name, "~")).Foreground(orange).String()
 						fmt.Println(changedFile)
 						FluxBuild()

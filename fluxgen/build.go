@@ -38,7 +38,7 @@ func FluxBuild() {
 
 	err = processPageAssets(PostsDir)
 	if err != nil {
-		errLogger.Fatalf("Processing Page Assets failed\n\t[%v]", err)
+		errLogger.Fatalf("Processing page Assets failed\n\t[%v]", err)
 	}
 
 	err = processStaticFolders(CSSDir, &fluxConfig)
@@ -57,8 +57,8 @@ func FluxBuild() {
 	//}
 }
 
-func loadResources(path ...string) (Resources, error) {
-	resources := Resources{}
+func loadResources(path ...string) (resources, error) {
+	resources := resources{}
 	for _, p := range path {
 		if _, err := os.Stat(p); err == nil {
 			err := filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
@@ -73,30 +73,30 @@ func loadResources(path ...string) (Resources, error) {
 				return nil
 			})
 			if err != nil {
-				return Resources{}, err
+				return resources, err
 			}
 		}
 	}
 	return resources, nil
 }
 
-func parseFluxConfig(path string) (FluxConfig, error) {
-	fluxConfig := make(FluxConfig)
+func parseFluxConfig(path string) (fluxConfig, error) {
+	fluxConfig := make(fluxConfig)
 	configFile, err := ioutil.ReadFile(path)
 	if err != nil {
-		return FluxConfig{}, err
+		return fluxConfig, err
 	}
 	err = json.Unmarshal(configFile, &fluxConfig)
 	if err != nil {
-		return FluxConfig{}, err
+		return fluxConfig, err
 	}
 	printMsg("Parsed Config File", "tick")
 	return fluxConfig, nil
 }
 
-func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages, error) {
-	var allPages Pages
-	var postList Pages
+func parsePages(config *fluxConfig, resources *resources) (pages, pages, error) {
+	var allPages pages
+	var postList pages
 	if _, err := os.Stat(PostsDir); err == nil {
 		err := filepath.WalkDir(PostsDir, func(path string, d fs.DirEntry, err error) error {
 			if !d.IsDir() && filepath.Ext(path) == ".md" {
@@ -107,12 +107,12 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages, error) 
 			return nil
 		})
 		if err != nil {
-			return Pages{}, Pages{}, err
+			return allPages, postList, err
 		}
 
 		dirContent, err := ioutil.ReadDir(".")
 		if err != nil {
-			return Pages{}, Pages{}, err
+			return allPages, postList, err
 		}
 
 		for _, f := range dirContent {
@@ -121,13 +121,13 @@ func parsePages(config *FluxConfig, resources *Resources) (Pages, Pages, error) 
 				allPages = append(allPages, htmlPage)
 			}
 		}
-		printMsg("Parsed Pages", "tick")
+		printMsg("Parsed pages", "tick")
 	}
 
 	return allPages, postList, nil
 }
 
-func parseHTMLTemplates(allPages, posts Pages) error {
+func parseHTMLTemplates(allPages, posts pages) error {
 	for _, p := range allPages {
 		p.PostsList = &posts
 		buffer, err := p.applyTemplate()
@@ -163,12 +163,12 @@ func processPageAssets(dir string) error {
 		if err != nil {
 			return err
 		}
-		printMsg("Processed Page Assets", "tick")
+		printMsg("Processed page Assets", "tick")
 	}
 	return nil
 }
 
-func processStaticFolders(filePath string, fc *FluxConfig) error {
+func processStaticFolders(filePath string, fc *fluxConfig) error {
 	if _, err := os.Stat(filePath); err == nil {
 		err = filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {

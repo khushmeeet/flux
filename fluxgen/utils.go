@@ -22,7 +22,7 @@ import (
 
 var green = termenv.ColorProfile().Color("#29bc89")
 
-func (p *Page) applyTemplate() (string, error) {
+func (p *page) applyTemplate() (string, error) {
 	tmpl, err := pongo2.FromFile(p.template + ".html")
 	if err != nil {
 		return "", err
@@ -45,7 +45,7 @@ func (p *Page) applyTemplate() (string, error) {
 	return hpp.PrPrint(out), nil
 }
 
-func parseMarkdown(path string, config *FluxConfig, r *Resources) (Page, error) {
+func parseMarkdown(path string, config *fluxConfig, r *resources) (page, error) {
 	var buff bytes.Buffer
 	context := parser.NewContext()
 	md := goldmark.New(
@@ -59,18 +59,18 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) (Page, error) 
 
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return Page{}, nil
+		return page{}, nil
 	}
 
 	err = md.Convert(file, &buff, parser.WithContext(context))
 	if err != nil {
-		return Page{}, err
+		return page{}, err
 	}
 	frontMatter := meta.Get(context)
 
 	parsedDate, err := time.Parse("2006-01-02", frontMatter["date"].(string))
 	if err != nil {
-		return Page{}, err
+		return page{}, err
 	}
 
 	metaData := make(map[string]interface{})
@@ -80,39 +80,35 @@ func parseMarkdown(path string, config *FluxConfig, r *Resources) (Page, error) 
 		}
 	}
 
-	page := Page{
-		Title:        frontMatter["title"].(string),
-		Date:         parsedDate,
-		template:     filepath.Join(TemplatesDir, frontMatter["template"].(string)),
-		oldExtention: filepath.Ext(path),
-		newExtension: ".html",
-		filename:     filepath.Base(path),
-		Content:      template.HTML(buff.Bytes()),
-		Meta:         make(map[string]interface{}),
-		fluxConfig:   config,
-		resources:    r,
+	page := page{
+		Title:      frontMatter["title"].(string),
+		Date:       parsedDate,
+		template:   filepath.Join(TemplatesDir, frontMatter["template"].(string)),
+		filename:   filepath.Base(path),
+		Content:    template.HTML(buff.Bytes()),
+		Meta:       make(map[string]interface{}),
+		fluxConfig: config,
+		resources:  r,
 	}
 	page.setHref(path)
 	return page, nil
 }
 
-func parseHTML(path string, config *FluxConfig, resources *Resources) (Page, error) {
+func parseHTML(path string, config *fluxConfig, resources *resources) (page, error) {
 	file, err := ioutil.ReadFile(path)
 	if err != nil {
-		return Page{}, err
+		return page{}, err
 	}
 
-	page := Page{
-		Title:        "",
-		Date:         time.Time{},
-		template:     strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
-		oldExtention: filepath.Ext(path),
-		newExtension: ".html",
-		filename:     filepath.Base(path),
-		Content:      template.HTML(file),
-		Meta:         make(map[string]interface{}),
-		fluxConfig:   config,
-		resources:    resources,
+	page := page{
+		Title:      "",
+		Date:       time.Time{},
+		template:   strings.TrimSuffix(filepath.Base(path), filepath.Ext(path)),
+		filename:   filepath.Base(path),
+		Content:    template.HTML(file),
+		Meta:       make(map[string]interface{}),
+		fluxConfig: config,
+		resources:  resources,
 	}
 	page.setHref(path)
 	return page, nil
@@ -143,7 +139,7 @@ func copyFile(src, dst string) error {
 	return err
 }
 
-func (p *Page) setHref(path string) {
+func (p *page) setHref(path string) {
 	if filepath.Base(path) == "index.html" {
 		p.Href = "/"
 	} else if filepath.Ext(path) == ".html" {
@@ -173,7 +169,7 @@ func createFileWriteDir(filePath string) error {
 	return nil
 }
 
-func getResource(r *Resources) func(v string) string {
+func getResource(r *resources) func(v string) string {
 	return func(v string) string {
 		return (*r)[v]
 	}

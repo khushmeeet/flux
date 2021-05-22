@@ -10,7 +10,7 @@ type SassCompiler struct {
 	compiler libsass.Compiler
 }
 
-func createSassCompiler(src io.Reader, dst io.Writer, fc *FluxConfig) *SassCompiler {
+func createSassCompiler(src io.Reader, dst io.Writer, fc *fluxConfig) *SassCompiler {
 	var comp libsass.Compiler
 	paths := libsass.IncludePaths([]string{CSSDir})
 
