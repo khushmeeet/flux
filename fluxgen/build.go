@@ -9,9 +9,13 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 )
 
 func FluxBuild() {
+	wg := sync.WaitGroup{}
+	wg.Add(2)
+
 	FluxClean()
 
 	fluxConfig, err := parseFluxConfig(ConfigFile)
@@ -41,16 +45,21 @@ func FluxBuild() {
 		errLogger.Fatalf("Processing page Assets failed\n\t[%v]", err)
 	}
 
-	err = processStaticFolders(CSSDir, &fluxConfig)
-	if err != nil {
-		errLogger.Fatalf("Processing CSS Files failed\n\t[%v]", err)
-	}
+	go func() {
+		err := processStaticFolders(CSSDir, &fluxConfig, &wg)
+		if err != nil {
+			errLogger.Fatalf("Processing CSS Files failed\n\t[%v]", err)
+		}
+	}()
 
-	err = processStaticFolders(AssetsDir, &fluxConfig)
-	if err != nil {
-		errLogger.Fatalf("Processing Static Files failed\n\t[%v]", err)
-	}
+	go func() {
+		err := processStaticFolders(AssetsDir, &fluxConfig, &wg)
+		if err != nil {
+			errLogger.Fatalf("Processing Static Files failed\n\t[%v]", err)
+		}
+	}()
 
+	wg.Wait()
 	printMsg("Done", "party")
 	//if fluxConfig["minify_html"] == true {
 	//	minifyHtml()
@@ -168,7 +177,8 @@ func processPageAssets(dir string) error {
 	return nil
 }
 
-func processStaticFolders(filePath string, fc *fluxConfig) error {
+func processStaticFolders(filePath string, fc *fluxConfig, wg *sync.WaitGroup) error {
+	defer wg.Done()
 	if _, err := os.Stat(filePath); err == nil {
 		err = filepath.WalkDir(filePath, func(path string, d fs.DirEntry, err error) error {
 			if d.IsDir() {

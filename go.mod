@@ -6,11 +6,11 @@ require (
 	github.com/Joker/hpp v1.0.0
 	github.com/alecthomas/chroma v0.9.1 // indirect
 	github.com/flosch/pongo2/v4 v4.0.2
-	github.com/fsnotify/fsnotify v1.4.9 // indirect
+	github.com/fsnotify/fsnotify v1.4.9
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/mapstructure v1.4.1 // indirect
-	github.com/muesli/termenv v0.8.1 // indirect
+	github.com/muesli/termenv v0.8.1
 	github.com/pelletier/go-toml v1.9.1 // indirect
 	github.com/spf13/afero v1.6.0 // indirect
 	github.com/spf13/cast v1.3.1 // indirect
