@@ -35,7 +35,8 @@ func WatchAndServe(port string, watch bool) {
 			return
 		}
 
-		serve("HTTP Server running at", port)
+		FluxBuild()
+		serve("HTTP Server running at", port, true)
 
 		go func() {
 			for {
@@ -45,7 +46,7 @@ func WatchAndServe(port string, watch bool) {
 						return
 					}
 					if e.Op == fsnotify.Write {
-						fmt.Println("\n")
+						fmt.Println("...")
 						changedFile := termenv.String("File changed:" + strings.TrimSuffix(e.Name, "~")).Foreground(orange).String()
 						fmt.Println(changedFile)
 						FluxBuild()
@@ -61,19 +62,27 @@ func WatchAndServe(port string, watch bool) {
 		}()
 		<-done
 	} else {
-		serve(port, "Running http server at")
+		FluxBuild()
+		serve("Running http server at", port, false)
 	}
 }
 
-func serve(message, port string) {
+func serve(message, port string, async bool) {
 	http.Handle("/", http.FileServer(http.Dir(SiteDir)))
 	fmt.Printf("%s :%s...\n", message, port)
-	go func() {
+	if async == true {
+		go func() {
+			err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux))
+			if err != nil {
+				log.Fatalf("Unable to start http server %v", err)
+			}
+		}()
+	} else {
 		err := http.ListenAndServe(fmt.Sprintf(":%v", port), Logger(os.Stderr, http.DefaultServeMux))
 		if err != nil {
 			log.Fatalf("Unable to start http server %v", err)
 		}
-	}()
+	}
 }
 
 func Logger(out io.Writer, h http.Handler) http.Handler {
