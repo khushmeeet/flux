@@ -30,7 +30,7 @@ func FluxInit(projectName string) {
 		},
 		"minify_css": false,
 		//"minify_html": false,
-		"rss_feed": false,
+		//"rss_feed": false,
 	}
 
 	fmt.Println("Creating root folder: " + projectName)
