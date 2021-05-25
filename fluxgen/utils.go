@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"github.com/Joker/hpp"
+	_ "github.com/flosch/pongo2-addons"
 	"github.com/flosch/pongo2/v4"
 	"github.com/muesli/termenv"
 	"github.com/yuin/goldmark"
@@ -183,4 +184,18 @@ func printMsg(msg, status string) {
 		info = termenv.String("️🎉").String()
 	}
 	fmt.Printf("%s %s\n", msg, info)
+}
+
+func max(a, b int) int {
+	if a > b {
+		return a
+	}
+	return b
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+	return b
 }
