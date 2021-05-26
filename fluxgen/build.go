@@ -3,7 +3,6 @@ package fluxgen
 import (
 	"encoding/json"
 	"fmt"
-	"github.com/flosch/pongo2/v4"
 	"io/fs"
 	"io/ioutil"
 	"log"
@@ -12,21 +11,6 @@ import (
 	"strings"
 	"sync"
 )
-
-func init() {
-	pongo2.RegisterFilter("slugify", filterSlugify)
-	pongo2.RegisterFilter("filesizeformat", filterFilesizeformat)
-	pongo2.RegisterFilter("truncatesentences", filterTruncatesentences)
-	pongo2.RegisterFilter("truncatesentences_html", filterTruncatesentencesHTML)
-	pongo2.RegisterFilter("random", filterRandom)
-	pongo2.RegisterFilter("markdown", filterMarkdown)
-	pongo2.RegisterFilter("timeuntil", filterTimeuntilTimesince)
-	pongo2.RegisterFilter("timesince", filterTimeuntilTimesince)
-	pongo2.RegisterFilter("naturaltime", filterTimeuntilTimesince)
-	pongo2.RegisterFilter("naturalday", filterNaturalday)
-	pongo2.RegisterFilter("intcomma", filterIntcomma)
-	pongo2.RegisterFilter("ordinal", filterOrdinal)
-}
 
 func FluxBuild() {
 	wg := sync.WaitGroup{}
