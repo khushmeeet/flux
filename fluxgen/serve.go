@@ -26,7 +26,7 @@ func WatchAndServe(port string, watch bool) {
 		defer w.Close()
 
 		err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() && d.Name() != SiteDir {
+			if d.IsDir() && d.Name() != SiteDir && d.Name() == ".git" {
 				return w.Add(path)
 			}
 			return nil
