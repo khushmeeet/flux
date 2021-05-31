@@ -47,7 +47,7 @@ func WatchAndServe(port string, watch bool) {
 					}
 					if e.Op == fsnotify.Write {
 						fmt.Println("...")
-						changedFile := termenv.String("File changed:" + strings.TrimSuffix(e.Name, "~")).Foreground(orange).String()
+						changedFile := termenv.String("File changed: " + strings.TrimSuffix(e.Name, "~")).Foreground(orange).String()
 						fmt.Println(changedFile)
 						FluxBuild()
 						fmt.Printf("HTTP Server running at :%s\n", port)
