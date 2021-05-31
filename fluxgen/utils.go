@@ -183,7 +183,7 @@ func printMsg(msg, status string) {
 	} else if status == "party" {
 		info = termenv.String("️🎉").String()
 	}
-	fmt.Printf("%s %s\n", msg, info)
+	fmt.Printf("%s %s\n", info, msg)
 }
 
 func max(a, b int) int {
