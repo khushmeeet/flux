@@ -2,8 +2,6 @@ package fluxgen
 
 import (
 	"fmt"
-	"github.com/fsnotify/fsnotify"
-	"github.com/muesli/termenv"
 	"io"
 	"io/fs"
 	"log"
@@ -12,6 +10,9 @@ import (
 	"path/filepath"
 	"strings"
 	"time"
+
+	"github.com/fsnotify/fsnotify"
+	"github.com/muesli/termenv"
 )
 
 var orange = termenv.ColorProfile().Color("#f9b208")
@@ -26,7 +27,7 @@ func WatchAndServe(port string, watch bool) {
 		defer w.Close()
 
 		err = filepath.WalkDir(".", func(path string, d fs.DirEntry, err error) error {
-			if d.IsDir() && d.Name() != SiteDir && d.Name() == ".git" {
+			if d.IsDir() && d.Name() != SiteDir && d.Name() != ".git" {
 				return w.Add(path)
 			}
 			return nil
