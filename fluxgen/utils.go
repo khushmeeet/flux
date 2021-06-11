@@ -69,14 +69,17 @@ func parseMarkdown(path string, config *fluxConfig, r *resources) (page, error) 
 	}
 	frontMatter := meta.Get(context)
 
-	parsedDate, err := time.Parse("2006-01-02", frontMatter["date"].(string))
-	if err != nil {
-		return page{}, err
+	var parsedDate time.Time
+	if val, ok := frontMatter["data"]; ok {
+		parsedDate, err = time.Parse("2006-01-02", val.(string))
+		if err != nil {
+			return page{}, err
+		}
 	}
 
 	metaData := make(map[string]interface{})
 	for k, v := range frontMatter {
-		if k != "title" && k != "date" && k != "template" {
+		if k != "title" && k != "template" {
 			metaData[k] = v
 		}
 	}
