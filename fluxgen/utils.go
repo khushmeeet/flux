@@ -6,10 +6,13 @@ import (
 	"github.com/Joker/hpp"
 	_ "github.com/flosch/pongo2-addons"
 	"github.com/flosch/pongo2/v4"
+	mathjax "github.com/litao91/goldmark-mathjax"
 	"github.com/muesli/termenv"
 	"github.com/yuin/goldmark"
+	emoji "github.com/yuin/goldmark-emoji"
 	highlighting "github.com/yuin/goldmark-highlighting"
 	meta "github.com/yuin/goldmark-meta"
+	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
 	"github.com/yuin/goldmark/renderer/html"
 	"html/template"
@@ -52,9 +55,19 @@ func parseMarkdown(path string, config *fluxConfig, r *resources) (page, error) 
 	md := goldmark.New(
 		goldmark.WithExtensions(meta.Meta,
 			highlighting.NewHighlighting(
-				highlighting.WithStyle("dracula"))),
+				highlighting.WithStyle("monokai"),
+			),
+			extension.Footnote,
+			extension.GFM,
+			emoji.Emoji,
+			mathjax.MathJax,
+		),
 		goldmark.WithRendererOptions(
 			html.WithHardWraps(),
+		),
+		goldmark.WithParserOptions(
+			parser.WithBlockParsers(),
+			parser.WithAttribute(),
 		),
 	)
 

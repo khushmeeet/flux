@@ -9,6 +9,7 @@ require (
 	github.com/flosch/pongo2-addons v0.0.0-20210526150811-f969446c5b72
 	github.com/flosch/pongo2/v4 v4.0.2
 	github.com/fsnotify/fsnotify v1.4.9
+	github.com/litao91/goldmark-mathjax v0.0.0-20210217064022-a43cf739a50f // indirect
 	github.com/magiconair/properties v1.8.5 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect
@@ -22,9 +23,9 @@ require (
 	github.com/spf13/cobra v1.1.3
 	github.com/spf13/jwalterweatherman v1.1.0 // indirect
 	github.com/spf13/viper v1.7.1
-	github.com/stretchr/testify v1.5.1 // indirect
 	github.com/wellington/go-libsass v0.9.2
 	github.com/yuin/goldmark v1.3.7
+	github.com/yuin/goldmark-emoji v1.0.1 // indirect
 	github.com/yuin/goldmark-highlighting v0.0.0-20210516132338-9216f9c5aa01
 	github.com/yuin/goldmark-meta v1.0.0
 	golang.org/x/net v0.0.0-20210525063256-abc453219eb5 // indirect
