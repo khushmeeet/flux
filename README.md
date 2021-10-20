@@ -2,6 +2,8 @@
 
 Flux is an opinionated Static Site Generator written in Go programming language. It works as a command line utility. **(In Development, highly unstable)**
 
+**_Project on hold_**
+
 ### Features (v1)
 
 - Support for front matter
