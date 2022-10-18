@@ -12,6 +12,8 @@ import (
 	"sync"
 )
 
+// Use https://github.com/gobuffalo/plush for templating
+
 func FluxBuild() {
 	wg := sync.WaitGroup{}
 	wg.Add(2)

@@ -3,6 +3,14 @@ package fluxgen
 import (
 	"bytes"
 	"fmt"
+	"html/template"
+	"io"
+	"io/ioutil"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
 	"github.com/Joker/hpp"
 	_ "github.com/flosch/pongo2-addons"
 	"github.com/flosch/pongo2/v4"
@@ -14,14 +22,6 @@ import (
 	meta "github.com/yuin/goldmark-meta"
 	"github.com/yuin/goldmark/extension"
 	"github.com/yuin/goldmark/parser"
-	"github.com/yuin/goldmark/renderer/html"
-	"html/template"
-	"io"
-	"io/ioutil"
-	"os"
-	"path/filepath"
-	"strings"
-	"time"
 )
 
 var green = termenv.ColorProfile().Color("#29bc89")
@@ -61,9 +61,6 @@ func parseMarkdown(path string, config *fluxConfig, r *resources) (page, error) 
 			extension.GFM,
 			emoji.Emoji,
 			mathjax.MathJax,
-		),
-		goldmark.WithRendererOptions(
-			html.WithHardWraps(),
 		),
 		goldmark.WithParserOptions(
 			parser.WithBlockParsers(),
@@ -200,18 +197,4 @@ func printMsg(msg, status string) {
 		info = termenv.String("️🎉").String()
 	}
 	fmt.Printf("%s %s\n", info, msg)
-}
-
-func max(a, b int) int {
-	if a > b {
-		return a
-	}
-	return b
-}
-
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-	return b
 }
